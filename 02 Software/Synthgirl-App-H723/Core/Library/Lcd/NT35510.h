@@ -1,8 +1,6 @@
 #ifndef __NT35510_H
 #define __NT35510_H
 
-#include "main.h"
-
 /* NT35510 Commands ----------------------------------------------------------*/
 
 #define  LCD_NOP                          0x0000      //      C         0

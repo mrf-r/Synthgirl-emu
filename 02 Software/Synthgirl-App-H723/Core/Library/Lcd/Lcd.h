@@ -1,8 +1,6 @@
 #ifndef __LCD_H
 #define __LCD_H
 
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "Font_05x07.h"
 #include "Font_07x09.h"
@@ -11,8 +9,6 @@
 #include "Global.h"
 #include "Icon.h"
 #include "NT35510.h"
-#include "main.h"
-#include "string.h"
 
 class Lcd {
    private:
@@ -27,21 +23,7 @@ class Lcd {
     uint16_t fontSpacing;
     uint16_t fontWidth;
     uint16_t fontHeight;
-    void writeCommand(uint16_t command) {
-        LCD_RS_LOW;
-        LCD_DATA_GPIO_Port->ODR = command;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-    }
-    void writeData(uint16_t data) {
-        LCD_RS_HIGH;
-        LCD_DATA_GPIO_Port->ODR = data;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-    }
-    void setAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
-    void clearAddressWindow();
-    void fastFill(RGB16Color color, uint32_t pix);
+ 
     uint8_t getLetter(char letter);
     RGB16Color alphaColor(RGB16Color color_, float alpha);
     RGB16Color alphaColor(struct RGB24RawColor color_, float alpha);

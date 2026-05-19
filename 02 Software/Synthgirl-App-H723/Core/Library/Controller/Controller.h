@@ -7,37 +7,19 @@
 #include "Global.h"
 #include "Lcd.h"
 #include "Lfo.h"
-#include "fatfs.h"
-#include "main.h"
-#include "sdmmc.h"
-#include "stm32h7xx_hal.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "ff.h"
+// #include "main.h"
+// #include "sdmmc.h"
+// #include "stm32h7xx_hal.h"
+// #include <stdio.h>
+// #include <stdlib.h>
+#include "bsp.h"
+#include "timerEmu.h"
 
 extern "C" uint8_t syncInData[2];
 extern "C" uint8_t syncOutData[2];
 
 extern "C" uint8_t midiRxData;
-
-extern "C" UART_HandleTypeDef huart4; // sync-out
-extern "C" UART_HandleTypeDef huart7; // sync-in
-
-extern "C" UART_HandleTypeDef huart1; // midi-rx
-extern "C" UART_HandleTypeDef huart6; // midi-tx
-
-extern "C" TIM_HandleTypeDef htim5;  // transition timer
-extern "C" TIM_HandleTypeDef htim6;  // left button timer
-extern "C" TIM_HandleTypeDef htim7;  // right button timer
-extern "C" TIM_HandleTypeDef htim8;  // beat button timer
-extern "C" TIM_HandleTypeDef htim12; // updown long press timer
-extern "C" TIM_HandleTypeDef htim13; // button long press timer
-extern "C" TIM_HandleTypeDef htim14; // play timer
-extern "C" TIM_HandleTypeDef htim15; // text timer
-extern "C" TIM_HandleTypeDef htim16; // power button timer
-extern "C" TIM_HandleTypeDef htim17; // sd check timer
-extern "C" TIM_HandleTypeDef htim23; // beat sync timer
-extern "C" TIM_HandleTypeDef htim24; // limit alert timer
 
 class Controller {
 private:
@@ -250,88 +232,68 @@ public:
     }
 
     /* Timer functions -------------------------------------------------------*/
+    // TimerEmu tim_Transition;
+    TimerEmu tim_UpDownButton;
+    TimerEmu tim_LongButton;
+    TimerEmu tim_Play;
+    TimerEmu tim_Text;
+    TimerEmu tim_PowerButton;
+    TimerEmu tim_Sd;
+    TimerEmu tim_BeatSync;
+    TimerEmu tim_LimitAlert;
 
-    void startTransitionTimer() {
-        HAL_TIM_Base_Start_IT(&htim5);
+    // const uint32_t kTimTransitionMs = 1;
+    const uint32_t kTimUpDownButtonMs = 400;
+    const uint32_t kTimLongButtonMs = 200;
+    const uint32_t kTimPlayMs = 2;
+    const uint32_t kTimTextMs = 1000;
+    const uint32_t kTimPowerButtonMs = 1000;
+    const uint32_t kTimSdMs = 1000;
+    const uint32_t kTimBeatSyncMs = 10;
+    const uint32_t kTimLimitAlertMs = 1000;
+
+    void timersInit() {
+        // tim_Transition.init(kTimTransitionMs, reinterpret_cast<ClassPtr*>(this), reinterpret_cast<MethodPtr>(&Controller::interruptTransition));
+        tim_UpDownButton.init(kTimUpDownButtonMs, reinterpret_cast<ClassPtr*>(this), reinterpret_cast<MethodPtr>(&Controller::interruptUpDownButtonRead));
+        tim_LongButton.init(kTimLongButtonMs, reinterpret_cast<ClassPtr*>(this), reinterpret_cast<MethodPtr>(&Controller::interruptLongButtonRead));
+        tim_Play.init(kTimPlayMs, reinterpret_cast<ClassPtr*>(this), reinterpret_cast<MethodPtr>(&Controller::interruptPlay));
+        tim_Text.init(kTimTextMs, reinterpret_cast<ClassPtr*>(this), reinterpret_cast<MethodPtr>(&Controller::interruptText));
+        tim_PowerButton.init(kTimPowerButtonMs, reinterpret_cast<ClassPtr*>(this), reinterpret_cast<MethodPtr>(&Controller::interruptPowerButtonRead));
+        tim_Sd.init(kTimSdMs, reinterpret_cast<ClassPtr*>(this), reinterpret_cast<MethodPtr>(&Controller::interruptSd));
+        tim_BeatSync.init(kTimBeatSyncMs, reinterpret_cast<ClassPtr*>(this), reinterpret_cast<MethodPtr>(&Controller::interruptBeatSync));
+        tim_LimitAlert.init(kTimLimitAlertMs, reinterpret_cast<ClassPtr*>(this), reinterpret_cast<MethodPtr>(&Controller::interruptLimitAlert));
     }
-    void stopTransitionTimer() {
-        HAL_TIM_Base_Stop_IT(&htim5);
-        __HAL_TIM_SET_COUNTER(&htim5, 0);
+
+    void timersCheck(uint32_t clock) {
+        // tim_Transition.check(clock);
+        tim_UpDownButton.check(clock);
+        tim_LongButton.check(clock);
+        tim_Play.check(clock);
+        tim_Text.check(clock);
+        tim_PowerButton.check(clock);
+        tim_Sd.check(clock);
+        tim_BeatSync.check(clock);
+        tim_LimitAlert.check(clock);
     }
-    void startLeftButtonTimer() {
-        HAL_TIM_Base_Start_IT(&htim6);
-    }
-    void stopLeftButtonTimer() {
-        HAL_TIM_Base_Stop_IT(&htim6);
-    }
-    void startRightButtonTimer() {
-        HAL_TIM_Base_Start_IT(&htim7);
-    }
-    void stopRightButtonTimer() {
-        HAL_TIM_Base_Stop_IT(&htim7);
-    }
-    void startBeatButtonTimer() {
-        HAL_TIM_Base_Start_IT(&htim8);
-    }
-    void stopBeatButtonTimer() {
-        HAL_TIM_Base_Stop_IT(&htim8);
-    }
-    void startUpDownButtonTimer() {
-        HAL_TIM_Base_Start_IT(&htim12);
-    }
-    void stopUpDownButtonTimer() {
-        HAL_TIM_Base_Stop_IT(&htim12);
-        __HAL_TIM_SET_COUNTER(&htim12, 0);
-    }
-    void startLongButtonTimer() {
-        HAL_TIM_Base_Start_IT(&htim13);
-    }
-    void stopLongButtonTimer() {
-        HAL_TIM_Base_Stop_IT(&htim13);
-        __HAL_TIM_SET_COUNTER(&htim13, 0);
-    }
-    void startPlayTimer() {
-        HAL_TIM_Base_Start_IT(&htim14);
-    }
-    void stopPlayTimer() {
-        HAL_TIM_Base_Stop_IT(&htim14);
-    }
-    void startTextTimer() {
-        HAL_TIM_Base_Start_IT(&htim15);
-    }
-    void stopTextTimer() {
-        HAL_TIM_Base_Stop_IT(&htim15);
-        __HAL_TIM_SET_COUNTER(&htim15, 0);
-    }
-    void startPowerButtonTimer() {
-        HAL_TIM_Base_Start_IT(&htim16);
-        powerButtonCounter = 0;
-    }
-    void stopPowerButtonTimer() {
-        HAL_TIM_Base_Stop_IT(&htim16);
-        __HAL_TIM_SET_COUNTER(&htim16, 0);
-    }
-    void startSdTimer() {
-        HAL_TIM_Base_Start_IT(&htim17);
-    }
-    void stopSdTimer() {
-        HAL_TIM_Base_Stop_IT(&htim17);
-        __HAL_TIM_SET_COUNTER(&htim17, 0);
-    }
-    void startBeatSyncTimer() {
-        HAL_TIM_Base_Start_IT(&htim23);
-    }
-    void stopBeatSyncTimer() {
-        HAL_TIM_Base_Stop_IT(&htim23);
-        __HAL_TIM_SET_COUNTER(&htim23, 0);
-    }
-    void startLimitAlertTimer() {
-        HAL_TIM_Base_Start_IT(&htim24);
-    }
-    void stopLimitAlertTimer() {
-        HAL_TIM_Base_Stop_IT(&htim24);
-        __HAL_TIM_SET_COUNTER(&htim24, 0);
-    }
+    
+    // void startTransitionTimer() { tim_Transition.start(); }
+    // void stopTransitionTimer() { tim_Transition.stop(); }
+    void startUpDownButtonTimer() { tim_UpDownButton.start(); }
+    void stopUpDownButtonTimer() { tim_UpDownButton.stop(); }
+    void startLongButtonTimer() { tim_LongButton.start(); }
+    void stopLongButtonTimer() { tim_LongButton.stop(); }
+    void startPlayTimer() { tim_Play.start(); }
+    void stopPlayTimer() { tim_Play.stop(); }
+    void startTextTimer() { tim_Text.start(); }
+    void stopTextTimer() { tim_Text.stop(); }
+    void startPowerButtonTimer() { tim_PowerButton.start(); powerButtonCounter = 0; }
+    void stopPowerButtonTimer() { tim_PowerButton.stop(); }
+    void startSdTimer() { tim_Sd.start(); }
+    void stopSdTimer() { tim_Sd.stop(); }
+    void startBeatSyncTimer() { tim_BeatSync.start(); }
+    void stopBeatSyncTimer() { tim_BeatSync.stop(); }
+    void startLimitAlertTimer() { tim_LimitAlert.start(); }
+    void stopLimitAlertTimer() { tim_LimitAlert.stop(); }
 
     /* Dac functions ---------------------------------------------------------*/
 
@@ -347,11 +309,11 @@ public:
     SdResult sd_getLabel();
     SdResult sd_setLabel();
     SdResult sd_getSpace();
-    SdResult sd_checkFileExist(char *fileAddress);
-    SdResult sd_checkFolderExist(char *folderAddress);
-    SdResult sd_loadImage(char *fileAddress, uint32_t paletteAddress, uint32_t dataAddress, uint16_t paletteSize, uint16_t width, uint16_t height, RGBMode mode);
-    SdResult load16BitAudio(char *fileAddress, uint32_t ramAddress, uint32_t sampleSize);
-    SdResult load24BitAudio(char *fileAddress, uint32_t ramAddress, uint32_t sampleSize);
+    SdResult sd_checkFileExist(const char *fileAddress);
+    SdResult sd_checkFolderExist(const char *folderAddress);
+    SdResult sd_loadImage(const char *fileAddress, void* paletteAddress, void* dataAddress, uint16_t paletteSize, uint16_t width, uint16_t height, RGBMode mode);
+    SdResult load16BitAudio(const char *fileAddress, void* ramAddress, uint32_t sampleSize);
+    SdResult load24BitAudio(const char *fileAddress, void* ramAddress, uint32_t sampleSize);
     SdResult sd_checkMetronome();
     SdResult sd_loadMetronome();
     void sd_getLibraries();
@@ -380,11 +342,11 @@ public:
 
     /* Sdram functions -------------------------------------------------------*/
 
-    void sdram_write16BitAudio(uint32_t ramAddress_, int16_t data_);
-    int16_t sdram_read16BitAudio(uint32_t ramAddress_);
-    void sdram_write24BitAudio(uint32_t ramAddress_, int32_t data_);
-    int32_t sdram_read24BitAudio(uint32_t ramAddress_);
-    void sdram_fadeOut24BitAudio(uint32_t ramAddress_, uint32_t sampleSize_, uint16_t fadeOutSize_);
+    void sdram_write16BitAudio(void* ramAddress_, int16_t data_);
+    int16_t sdram_read16BitAudio(void* ramAddress_);
+    void sdram_write24BitAudio(void* ramAddress_, int32_t data_);
+    int32_t sdram_read24BitAudio(void* ramAddress_);
+    void sdram_fadeOut24BitAudio(void* ramAddress_, uint32_t sampleSize_, uint16_t fadeOutSize_);
 
     /* Lcd functions ---------------------------------------------------------*/
 

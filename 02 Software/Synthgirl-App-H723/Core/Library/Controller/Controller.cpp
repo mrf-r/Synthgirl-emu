@@ -1,4 +1,16 @@
+#include <string.h>
+#include <stdio.h> // sprintf\((.+?),   ->    snprintf($1, sizeof($1),
 #include "Controller.h"
+// #define memset(...)
+// #define memcpy(...)
+// #define strcmp(...)
+// #define strncmp(...)
+// #define strcat(...) <!!!
+// #define strncat(...) <!!!
+// #define strncpy(...) <!!!
+// #define strcpy(...) <!!!
+// #define strtok(...)
+// #define strlen(...)
 
 Controller::Controller()
     : lcd(LANDSCAPE_1, WHITE, BLACK, FONT_07x09),
@@ -147,12 +159,12 @@ void Controller::initialize() {
     effect_setDData(1, EF_DELAY, kInitialDelayDry);
     effect_setEData(1, EF_DELAY, kInitialDelayWet);
 
-    keyboard_initialize();
+    // keyboard_initialize();
     dac_initialize();
     lcd_initialize();
 
-    startTransitionTimer();
-    stopTransitionTimer();
+    // startTransitionTimer();
+    // stopTransitionTimer();
 
     startTextTimer();
     stopTextTimer();
@@ -166,16 +178,16 @@ void Controller::initialize() {
     startLimitAlertTimer();
     stopLimitAlertTimer();
 
-    LED0_ON;
-    LED1_ON;
-    LED2_ON;
+    bspLedSet(LED0, true);
+    bspLedSet(LED1, true);
+    bspLedSet(LED2, true);
 }
 
 void Controller::systemStart() {
-    lcd.displayOn();
+    // lcd.displayOn();
     dac.audioOn();
 
-    HAL_Delay(500);
+    // bspDelayMs(500);
 
     sd_initialize();
 
@@ -187,24 +199,26 @@ void Controller::systemStart() {
     updatePlayTimerPeriod();
 
     startSdTimer();
-    startTransitionTimer();
+    // startTransitionTimer();
+    interruptTransition();
 
-    HAL_HalfDuplex_EnableTransmitter(&huart4);
-    HAL_UART_Receive_DMA(&huart7, syncInData, 2);
+    // HAL_HalfDuplex_EnableTransmitter(&huart4);
+    // HAL_UART_Receive_DMA(&huart7, syncInData, 2);
 
-    HAL_HalfDuplex_EnableReceiver(&huart1);
-    HAL_HalfDuplex_EnableTransmitter(&huart6);
+    // HAL_HalfDuplex_EnableReceiver(&huart1);
+    // HAL_HalfDuplex_EnableTransmitter(&huart6);
 
-    HAL_UART_Receive_IT(&huart1, &midiRxData, 1);
+    // HAL_UART_Receive_IT(&huart1, &midiRxData, 1);
 
-    HAL_Delay(100);
+    // bspDelayMs(100);
 }
 
 void Controller::systemReset() {
-    lcd.displayOff();
-    HAL_Delay(1000);
+    // lcd.displayOff();
+    // bspDelayMs(1000);
     dac.audioOff();
-    NVIC_SystemReset();
+    // NVIC_SystemReset();
+    // TODO!!
 }
 
 void Controller::systemUpdate_A() {
@@ -259,7 +273,7 @@ bool Controller::sendMidiCommand(uint8_t command_, uint8_t data0_, uint8_t data1
     if (!midiTxBusy) {
         uint8_t dataSend[3] = {command_, data0_, data1_};
         midiTxBusy = true;
-        HAL_UART_Transmit_DMA(&huart6, dataSend, 3);
+        // HAL_UART_Transmit_DMA(&huart6, dataSend, 3);
         return true;
     } else {
         return false;
@@ -302,13 +316,14 @@ bool Controller::sendSyncCommand(uint8_t data_) {
     // check(syncOutData[0], 0);
     // check(syncOutData[1], 1);
 
-    while (HAL_UART_GetState(&huart4) != HAL_UART_STATE_READY) {
-    }
-    if (HAL_UART_Transmit_DMA(&huart4, syncOutData, sizeof(syncOutData)) == HAL_OK) {
-        return true;
-    } else {
-        return false;
-    }
+    // while (HAL_UART_GetState(&huart4) != HAL_UART_STATE_READY) {
+    // }
+    // if (HAL_UART_Transmit_DMA(&huart4, syncOutData, sizeof(syncOutData)) == HAL_OK) {
+    //     return true;
+    // } else {
+    //     return false;
+    // }
+    return true; // TODO!!!!!!!!!!!!!!!
 }
 
 void Controller::receiveSyncCommand() {
@@ -392,7 +407,7 @@ void Controller::adjustMeasureBarTiming() {
 
 void Controller::updatePlayTimerPeriod() {
     playTimerPeriod = 60000000 / (rhythm.tempo * kMeasureInterval);
-    __HAL_TIM_SET_AUTORELOAD(&htim14, playTimerPeriod - 1);
+    // __HAL_TIM_SET_AUTORELOAD(&htim14, playTimerPeriod - 1);
 }
 
 /* Button functions --------------------------------------------------------*/
@@ -401,11 +416,11 @@ void Controller::button_check() {}
 
 /* Keyboard functions --------------------------------------------------------*/
 
-void Controller::keyboard_initialize() {
-    CT0_SCL_HIGH;
-    CT1_SCL_HIGH;
-    CT2_SCL_HIGH;
-}
+// void Controller::keyboard_initialize() {
+//     CT0_SCL_HIGH;
+//     CT1_SCL_HIGH;
+//     CT2_SCL_HIGH;
+// }
 
 void Controller::keyboard_check_A() {
     if (keyboard.leftButton >= 0) {
@@ -1231,15 +1246,16 @@ void Controller::keyboard_check_C() {
 }
 
 void Controller::keyboard_enable() {
-    HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-    HAL_NVIC_EnableIRQ(EXTI3_IRQn);
-    HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+    // HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+    // HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+    // HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+    // TODO!!!!!!!!!!!!!!!!!!!!!!??????????????????
 }
 
 void Controller::keyboard_disable() {
-    HAL_NVIC_DisableIRQ(EXTI1_IRQn);
-    HAL_NVIC_DisableIRQ(EXTI3_IRQn);
-    HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+    // HAL_NVIC_DisableIRQ(EXTI1_IRQn);
+    // HAL_NVIC_DisableIRQ(EXTI3_IRQn);
+    // HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 }
 
 /* Dac functions -------------------------------------------------------------*/
@@ -1258,8 +1274,8 @@ SdResult Controller::sd_initialize() {
                 lcd.drawInitSdReadAlert();
                 sdInsertCheck = false;
             }
-            FATFS_UnLinkDriver(SDPath);
-            FATFS_LinkDriver(&SD_Driver, SDPath);
+            // FATFS_UnLinkDriver(SDPath);
+            // FATFS_LinkDriver(&SD_Driver, SDPath);
             if ((sd_mount() == SD_OK) && (sd_getLabel() == SD_OK) &&
                 (sd_getSpace() == SD_OK)) {
                 sd.serialTemp = sd.serial;
@@ -1335,6 +1351,7 @@ SdResult Controller::sd_initialize() {
             sdInsertCheck = true;
             if (sdResult == SD_ERROR_DETECT) {
                 while (sd_detect() != SD_OK) {
+                    bspDelayMs(1);
                     keyboard_check_C();
                     if (!power)
                         systemReset();
@@ -1342,12 +1359,13 @@ SdResult Controller::sd_initialize() {
             } else {
                 sd_unmount();
                 while (sd_detect() == SD_OK) {
+                    bspDelayMs(1);
                     keyboard_check_C();
                     if (!power)
                         systemReset();
                 }
             }
-            HAL_Delay(500);
+            bspDelayMs(500);
         }
     }
     lcd_clearInitSdAlert();
@@ -1361,8 +1379,8 @@ SdResult Controller::sd_reinitialize() {
     while (sdResult != SD_OK) {
         if (sd_detect() == SD_OK) {
             sd.detect = true;
-            FATFS_UnLinkDriver(SDPath);
-            FATFS_LinkDriver(&SD_Driver, SDPath);
+            // FATFS_UnLinkDriver(SDPath);
+            // FATFS_LinkDriver(&SD_Driver, SDPath);
             if ((sd_mount() == SD_OK) && (sd_getLabel() == SD_OK) && (sd_getSpace() == SD_OK)) {
                 if (sd.serial == sd.serialTemp) {
                     if (sd_checkFolderExist("System") == SD_OK) {
@@ -1411,6 +1429,7 @@ SdResult Controller::sd_reinitialize() {
             lcd_drawSdAlert(sdResult);
             if (sdResult == SD_ERROR_DETECT) {
                 while (sd_detect() != SD_OK) {
+                    bspDelayMs(1);
                     lcd_update();
                     keyboard_check_C();
                     if (!power)
@@ -1419,13 +1438,14 @@ SdResult Controller::sd_reinitialize() {
             } else {
                 sd_unmount();
                 while (sd_detect() == SD_OK) {
+                    bspDelayMs(1);
                     lcd_update();
                     keyboard_check_C();
                     if (!power)
                         systemReset();
                 }
             }
-            HAL_Delay(500);
+            bspDelayMs(500);
         }
     }
     lcd_clearSdAlert();
@@ -1440,7 +1460,7 @@ SdResult Controller::sd_reinitialize() {
 
 SdResult Controller::sd_detect() {
     SdResult sdResult;
-    (HAL_GPIO_ReadPin(SDMMC2_DETECT_GPIO_Port, SDMMC2_DETECT_Pin)) ? sdResult = SD_ERROR : sdResult = SD_OK;
+    (bspGpioGet(GPIO_SD_IN)) ? sdResult = SD_ERROR : sdResult = SD_OK;
     return sdResult;
 }
 
@@ -1457,38 +1477,44 @@ SdResult Controller::sd_unmount() {
 }
 
 SdResult Controller::sd_getLabel() {
-    SdResult sdResult;
-    (f_getlabel(SDPath, sd.label, &sd.serial) == FR_OK) ? sdResult = SD_OK : sdResult = SD_ERROR;
-    return sdResult;
+    // SdResult sdResult;
+    // (f_getlabel(SDPath, sd.label, &sd.serial) == FR_OK) ? sdResult = SD_OK : sdResult = SD_ERROR;
+    // return sdResult;
+    return SD_OK;
 }
 
 SdResult Controller::sd_setLabel() {
-    SdResult sdResult;
-    (f_setlabel("SYNTHKIT")) ? sdResult = SD_OK : sdResult = SD_ERROR;
-    return sdResult;
+    // SdResult sdResult;
+    // (f_setlabel("SYNTHKIT")) ? sdResult = SD_OK : sdResult = SD_ERROR;
+    // return sdResult;
+    return SD_OK;
 }
 
 SdResult Controller::sd_getSpace() {
-    SdResult sdResult;
-    FATFS *fs_ptr = &sd.fs;
-    uint32_t freeCluster;
-    if (f_getfree(SDPath, (DWORD *)&freeCluster, &fs_ptr) == FR_OK) {
-        uint32_t totalBlocks = (sd.fs.n_fatent - 2) * sd.fs.csize;
-        uint32_t freeBlocks = freeCluster * sd.fs.csize;
-        sd.totalSpace = totalBlocks / 2000;
-        sd.freeSpace = freeBlocks / 2000;
-        sd.usedSpace = sd.totalSpace - sd.freeSpace;
-        sdResult = SD_OK;
-    } else {
-        sd.totalSpace = 0;
-        sd.freeSpace = 0;
-        sd.usedSpace = 0;
-        sdResult = SD_ERROR;
-    }
-    return sdResult;
+    // SdResult sdResult;
+    // FATFS *fs_ptr = &sd.fs;
+    // uint32_t freeCluster;
+    // if (f_getfree(SDPath, (DWORD *)&freeCluster, &fs_ptr) == FR_OK) {
+    //     uint32_t totalBlocks = (sd.fs.n_fatent - 2) * sd.fs.csize;
+    //     uint32_t freeBlocks = freeCluster * sd.fs.csize;
+    //     sd.totalSpace = totalBlocks / 2000;
+    //     sd.freeSpace = freeBlocks / 2000;
+    //     sd.usedSpace = sd.totalSpace - sd.freeSpace;
+    //     sdResult = SD_OK;
+    // } else {
+    //     sd.totalSpace = 0;
+    //     sd.freeSpace = 0;
+    //     sd.usedSpace = 0;
+    //     sdResult = SD_ERROR;
+    // }
+    // return sdResult;
+    sd.totalSpace = 8800;
+    sd.freeSpace = 8000;
+    sd.usedSpace = sd.totalSpace - sd.freeSpace;
+    return SD_OK;
 }
 
-SdResult Controller::sd_checkFileExist(char *fileAddress) {
+SdResult Controller::sd_checkFileExist(const char *fileAddress) {
     SdResult sdResult;
     if ((f_stat(fileAddress, &sd.fileInfo) == FR_OK) && ((sd.fileInfo.fattrib & AM_DIR) == false)) {
         sdResult = SD_OK;
@@ -1498,7 +1524,7 @@ SdResult Controller::sd_checkFileExist(char *fileAddress) {
     return sdResult;
 }
 
-SdResult Controller::sd_checkFolderExist(char *folderAddress) {
+SdResult Controller::sd_checkFolderExist(const char *folderAddress) {
     SdResult sdResult;
     if ((f_stat(folderAddress, &sd.fileInfo) == FR_OK) && (sd.fileInfo.fattrib & AM_DIR)) {
         sdResult = SD_OK;
@@ -1508,7 +1534,7 @@ SdResult Controller::sd_checkFolderExist(char *folderAddress) {
     return sdResult;
 }
 
-SdResult Controller::sd_loadImage(char *fileAddress, uint32_t paletteAddress, uint32_t dataAddress, uint16_t paletteSize, uint16_t width, uint16_t height, RGBMode mode) {
+SdResult Controller::sd_loadImage(const char *fileAddress, void* paletteAddress, void* dataAddress, uint16_t paletteSize, uint16_t width, uint16_t height, RGBMode mode) {
     SdResult sdResult = SD_ERROR;
     char data[20] = "";
     char headerTitle[] = "RW_IMAGE  ";
@@ -1548,7 +1574,7 @@ SdResult Controller::sd_loadImage(char *fileAddress, uint32_t paletteAddress, ui
                                     if (f_read(&sd.file, &dataRead, readByteSize, &sd.bytesread) != FR_OK)
                                         errorCount += 1;
                                     for (uint16_t j = 0; j < readByteSize; j++) {
-                                        volatile uint8_t *writePtr = (volatile uint8_t *)(paletteAddress + pointerOffset);
+                                        volatile uint8_t *writePtr = (volatile uint8_t *)((uint8_t*)paletteAddress + pointerOffset);
                                         *writePtr = dataRead[j];
                                         pointerOffset += 1;
                                     }
@@ -1558,7 +1584,7 @@ SdResult Controller::sd_loadImage(char *fileAddress, uint32_t paletteAddress, ui
                                     if (f_read(&sd.file, &dataRead, remainderByteSize, &sd.bytesread) != FR_OK)
                                         errorCount += 1;
                                     for (uint16_t k = 0; k < remainderByteSize; k++) {
-                                        volatile uint8_t *writePtr = (volatile uint8_t *)(paletteAddress + pointerOffset);
+                                        volatile uint8_t *writePtr = (volatile uint8_t *)((uint8_t*)paletteAddress + pointerOffset);
                                         *writePtr = dataRead[k];
                                         pointerOffset += 1;
                                     }
@@ -1575,7 +1601,7 @@ SdResult Controller::sd_loadImage(char *fileAddress, uint32_t paletteAddress, ui
                                     if (f_read(&sd.file, &dataRead, readByteSize, &sd.bytesread) != FR_OK)
                                         errorCount += 1;
                                     for (uint16_t j = 0; j < readByteSize; j++) {
-                                        volatile uint8_t *writePtr = (volatile uint8_t *)(paletteAddress + pointerOffset);
+                                        volatile uint8_t *writePtr = (volatile uint8_t *)((uint8_t*)paletteAddress + pointerOffset);
                                         *writePtr = dataRead[j];
                                         pointerOffset += 1;
                                     }
@@ -1585,7 +1611,7 @@ SdResult Controller::sd_loadImage(char *fileAddress, uint32_t paletteAddress, ui
                                     if (f_read(&sd.file, &dataRead, remainderByteSize, &sd.bytesread) != FR_OK)
                                         errorCount += 1;
                                     for (uint16_t k = 0; k < remainderByteSize; k++) {
-                                        volatile uint8_t *writePtr = (volatile uint8_t *)(paletteAddress + pointerOffset);
+                                        volatile uint8_t *writePtr = (volatile uint8_t *)((uint8_t*)paletteAddress + pointerOffset);
                                         *writePtr = dataRead[k];
                                         pointerOffset += 1;
                                     }
@@ -1607,7 +1633,7 @@ SdResult Controller::sd_loadImage(char *fileAddress, uint32_t paletteAddress, ui
                                     if (f_read(&sd.file, &dataRead, readByteSize, &sd.bytesread) != FR_OK)
                                         errorCount += 1;
                                     for (uint16_t j = 0; j < readByteSize; j++) {
-                                        volatile uint8_t *writePtr = (volatile uint8_t *)(dataAddress + pointerOffset);
+                                        volatile uint8_t *writePtr = (volatile uint8_t *)((uint8_t*)dataAddress + pointerOffset);
                                         *writePtr = dataRead[j];
                                         pointerOffset += 1;
                                     }
@@ -1616,7 +1642,7 @@ SdResult Controller::sd_loadImage(char *fileAddress, uint32_t paletteAddress, ui
                                     if (f_read(&sd.file, &dataRead, remainderByteSize, &sd.bytesread) != FR_OK)
                                         errorCount += 1;
                                     for (uint16_t k = 0; k < remainderByteSize; k++) {
-                                        volatile uint8_t *writePtr = (volatile uint8_t *)(dataAddress + pointerOffset);
+                                        volatile uint8_t *writePtr = (volatile uint8_t *)((uint8_t*)dataAddress + pointerOffset);
                                         *writePtr = dataRead[k];
                                         pointerOffset += 1;
                                     }
@@ -1636,7 +1662,7 @@ SdResult Controller::sd_loadImage(char *fileAddress, uint32_t paletteAddress, ui
     return sdResult;
 }
 
-SdResult Controller::load16BitAudio(char *fileAddress, uint32_t ramAddress, uint32_t sampleSize) {
+SdResult Controller::load16BitAudio(const char *fileAddress, void* ramAddress, uint32_t sampleSize) {
     SdResult sdResult = SD_ERROR;
     struct WavData wavData;
 
@@ -1687,7 +1713,7 @@ SdResult Controller::load16BitAudio(char *fileAddress, uint32_t ramAddress, uint
     return sdResult;
 }
 
-SdResult Controller::load24BitAudio(char *fileAddress, uint32_t ramAddress, uint32_t sampleSize) {
+SdResult Controller::load24BitAudio(const char *fileAddress, void* ramAddress, uint32_t sampleSize) {
     SdResult sdResult = SD_ERROR;
     struct WavData wavData;
 
@@ -1776,7 +1802,7 @@ SdResult Controller::sd_getFileLibrary() {
         char fileEnd[] = ".rws";
         char fileNum[3];
 
-        sprintf(fileNum, "%03d", (i + 1));
+        snprintf(fileNum, sizeof(fileNum), "%03d", (i + 1));
         strcpy(fileName, fileStart);
         strcat(fileName, fileNum);
         strcat(fileName, fileEnd);
@@ -1813,7 +1839,7 @@ SdResult Controller::sd_getSynthkitLibrary() {
         char fileEnd[] = ".rws";
         char fileNum[3];
 
-        sprintf(fileNum, "%03d", (i + 1));
+        snprintf(fileNum, sizeof(fileNum), "%03d", (i + 1));
         strcpy(fileName, fileStart);
         strcat(fileName, fileNum);
         strcat(fileName, fileEnd);
@@ -1888,7 +1914,7 @@ SdResult Controller::sd_checkFile(uint8_t fileNum_) {
 
     char fileName[50];
     char fileNum[4];
-    sprintf(fileNum, "%03d", (fileNum_ + 1));
+    snprintf(fileNum, sizeof(fileNum), "%03d", (fileNum_ + 1));
     strcpy(fileName, kFileStart);
     strcat(fileName, fileNum);
     strcat(fileName, kFileEnd);
@@ -1917,7 +1943,7 @@ SdResult Controller::sd_loadFile(uint8_t fileNum_) {
 
     char fileName[50];
     char fileNum[4];
-    sprintf(fileNum, "%03d", (fileNum_ + 1));
+    snprintf(fileNum, sizeof(fileNum), "%03d", (fileNum_ + 1));
     strcpy(fileName, kFileStart);
     strcat(fileName, fileNum);
     strcat(fileName, kFileEnd);
@@ -2001,7 +2027,7 @@ SdResult Controller::sd_loadFile(uint8_t fileNum_) {
                                 wavetableMissing[i] = true;
                             }
                             f_close(&sd.file);
-                            HAL_Delay(50);
+                            // bspDelayMs(50); // TODO: ???
                         } else {
                             wavetableNum[i] = -1;
                             wavetableMissing[i] = false;
@@ -2175,7 +2201,7 @@ SdResult Controller::sd_loadFile(uint8_t fileNum_) {
                     if (missingWavetable) {
                         (missingWavetable == 1) ? alertType = ALERT_MISSINGWAVETABLE : alertType = ALERT_MISSINGWAVETABLES;
                         lcd_drawAlert();
-                        HAL_Delay(1000);
+                        bspDelayMs(1000);
                         result = SD_ERROR;
                     } else {
                         result = SD_OK;
@@ -2196,7 +2222,7 @@ SdResult Controller::sd_saveFile(uint8_t fileNum_) {
     char eof[] = "EOF";
     char fileName[50];
     char fileNum[4];
-    sprintf(fileNum, "%03d", (fileNum_ + 1));
+    snprintf(fileNum, sizeof(fileNum), "%03d", (fileNum_ + 1));
     strcpy(fileName, kFileStart);
     strcat(fileName, fileNum);
     strcat(fileName, kFileEnd);
@@ -2412,7 +2438,7 @@ SdResult Controller::sd_clearFile(uint8_t fileNum_) {
     char eof[] = "EOF";
     char fileName[50];
     char fileNum[4];
-    sprintf(fileNum, "%03d", (fileNum_ + 1));
+    snprintf(fileNum, sizeof(fileNum), "%03d", (fileNum_ + 1));
     strcpy(fileName, kFileStart);
     strcat(fileName, fileNum);
     strcat(fileName, kFileEnd);
@@ -2537,7 +2563,7 @@ SdResult Controller::sd_checkSynthkit(uint8_t kitNum_) {
 
     char synthkitName[50];
     char synthkitNum[4];
-    sprintf(synthkitNum, "%03d", (kitNum_ + 1));
+    snprintf(synthkitNum, sizeof(synthkitNum), "%03d", (kitNum_ + 1));
     strcpy(synthkitName, kSynthkitStart);
     strcat(synthkitName, synthkitNum);
     strcat(synthkitName, kSynthkitEnd);
@@ -2566,7 +2592,7 @@ SdResult Controller::sd_loadSynthkit(bool mode_, uint8_t kitNum_) {
 
     char synthkitName[50];
     char synthkitNum[4];
-    sprintf(synthkitNum, "%03d", (kitNum_ + 1));
+    snprintf(synthkitNum, sizeof(synthkitNum), "%03d", (kitNum_ + 1));
     strcpy(synthkitName, kSynthkitStart);
     strcat(synthkitName, synthkitNum);
     strcat(synthkitName, kSynthkitEnd);
@@ -2649,7 +2675,7 @@ SdResult Controller::sd_loadSynthkit(bool mode_, uint8_t kitNum_) {
                                 wavetableMissing[i] = true;
                             }
                             f_close(&sd.file);
-                            HAL_Delay(50);
+                            // bspDelayMs(50); // TODO: ???
                         } else {
                             wavetableNum[i] = -1;
                             wavetableMissing[i] = false;
@@ -2793,7 +2819,7 @@ SdResult Controller::sd_loadSynthkit(bool mode_, uint8_t kitNum_) {
                     if (missingWavetable) {
                         (missingWavetable == 1) ? alertType = ALERT_MISSINGWAVETABLE : alertType = ALERT_MISSINGWAVETABLES;
                         lcd_drawAlert();
-                        HAL_Delay(1000);
+                        bspDelayMs(1000);
                         result = SD_ERROR;
                     } else {
                         result = SD_OK;
@@ -2814,7 +2840,7 @@ SdResult Controller::sd_saveSynthkit(bool mode_, uint8_t kitNum_) {
     char eof[] = "EOF";
     char synthkitName[50];
     char synthkitNum[4];
-    sprintf(synthkitNum, "%03d", (kitNum_ + 1));
+    snprintf(synthkitNum, sizeof(synthkitNum), "%03d", (kitNum_ + 1));
     strcpy(synthkitName, kSynthkitStart);
     strcat(synthkitName, synthkitNum);
     strcat(synthkitName, kSynthkitEnd);
@@ -3000,7 +3026,7 @@ SdResult Controller::sd_clearSynthkit(bool mode_, uint8_t kitNum_) {
     char eof[] = "EOF";
     char synthkitName[50];
     char synthkitNum[4];
-    sprintf(synthkitNum, "%03d", (kitNum_ + 1));
+    snprintf(synthkitNum, sizeof(synthkitNum), "%03d", (kitNum_ + 1));
     strcpy(synthkitName, kSynthkitStart);
     strcat(synthkitName, synthkitNum);
     strcat(synthkitName, kSynthkitEnd);
@@ -3103,7 +3129,7 @@ SdResult Controller::sd_checkWavetablesInUse() {
     if (missingWavetable) {
         (missingWavetable == 1) ? alertType = ALERT_MISSINGWAVETABLE : alertType = ALERT_MISSINGWAVETABLES;
         lcd_drawAlert();
-        HAL_Delay(1000);
+        bspDelayMs(1000);
         lcd_clearAlert();
         result = SD_ERROR;
     } else {
@@ -3126,55 +3152,55 @@ FRESULT Controller::sd_createDirectory(const char *path) {
 
 FRESULT Controller::sd_deleteDirectory(const char *path) {
     FRESULT result;
-    DIR dir;
-    FILINFO fileInfo;
-    char file[64] = "";
-    bool listFile = true;
+    // DIR dir;
+    // FILINFO fileInfo;
+    // char file[64] = "";
+    // bool listFile = true;
 
-    result = f_opendir(&dir, path);
-    if (result)
-        return result;
+    // result = f_opendir(&dir, path);
+    // if (result)
+    //     return result;
 
-    while (listFile) {
-        result = f_readdir(&dir, &fileInfo);
-        if ((result == FR_OK) && (fileInfo.fname[0] != 0)) {
-            memset(file, 0x00, strlen(file));
-            sprintf((char *)file, "%s/%s", path, fileInfo.fname);
-            (fileInfo.fattrib & AM_DIR) ? sd_deleteDirectory(file) : f_unlink(file);
-        } else {
-            listFile = false;
-        }
-    }
+    // while (listFile) {
+    //     result = f_readdir(&dir, &fileInfo);
+    //     if ((result == FR_OK) && (fileInfo.fname[0] != 0)) {
+    //         memset(file, 0x00, strlen(file));
+    //         snprintf(file, sizeof(file), "%s/%s", path, fileInfo.fname);
+    //         (fileInfo.fattrib & AM_DIR) ? sd_deleteDirectory(file) : f_unlink(file);
+    //     } else {
+    //         listFile = false;
+    //     }
+    // }
 
-    f_closedir(&dir);
-    f_unlink(path);
+    // f_closedir(&dir);
+    result = f_unlink(path);
     return result;
 }
 
 /* Sdram functions -----------------------------------------------------------*/
 
-void Controller::sdram_write16BitAudio(uint32_t ramAddress_, int16_t data_) {
-    *(__IO int16_t *)(ramAddress_) = data_;
+void Controller::sdram_write16BitAudio(void* ramAddress_, int16_t data_) {
+    *(volatile int16_t *)(ramAddress_) = data_;
 }
 
-int16_t Controller::sdram_read16BitAudio(uint32_t ramAddress_) {
-    return (int16_t)(*(__IO int16_t *)(ramAddress_));
+int16_t Controller::sdram_read16BitAudio(void* ramAddress_) {
+    return (int16_t)(*(volatile int16_t *)(ramAddress_));
 }
 
-void Controller::sdram_write24BitAudio(uint32_t ramAddress_, int32_t data_) {
+void Controller::sdram_write24BitAudio(void* ramAddress_, int32_t data_) {
     uint8_t a = (uint8_t)((data_) & 0xFF);
     uint8_t b = (uint8_t)((data_ >> 8) & 0xFF);
     uint8_t c = (uint8_t)((data_ >> 16) & 0xFF);
 
-    *(__IO uint8_t *)(ramAddress_) = a;
-    *(__IO uint8_t *)(ramAddress_ + 1) = b;
-    *(__IO uint8_t *)(ramAddress_ + 2) = c;
+    *(volatile uint8_t *)((uint8_t*)ramAddress_) = a;
+    *(volatile uint8_t *)((uint8_t*)ramAddress_ + 1) = b;
+    *(volatile uint8_t *)((uint8_t*)ramAddress_ + 2) = c;
 }
 
-int32_t Controller::sdram_read24BitAudio(uint32_t ramAddress_) {
-    volatile uint8_t *ptrA = (volatile uint8_t *)(ramAddress_);
-    volatile uint8_t *ptrB = (volatile uint8_t *)(ramAddress_ + 1);
-    volatile uint8_t *ptrC = (volatile uint8_t *)(ramAddress_ + 2);
+int32_t Controller::sdram_read24BitAudio(void* ramAddress_) {
+    volatile uint8_t *ptrA = (volatile uint8_t *)((uint8_t*)ramAddress_);
+    volatile uint8_t *ptrB = (volatile uint8_t *)((uint8_t*)ramAddress_ + 1);
+    volatile uint8_t *ptrC = (volatile uint8_t *)((uint8_t*)ramAddress_ + 2);
     uint8_t d;
     (*ptrC >> 7) ? d = 0xFF : d = 0x00;
 
@@ -3182,12 +3208,12 @@ int32_t Controller::sdram_read24BitAudio(uint32_t ramAddress_) {
     return audioData;
 }
 
-void Controller::sdram_fadeOut24BitAudio(uint32_t ramAddress_, uint32_t sampleSize_, uint16_t fadeOutSize_) {
-    uint32_t address = ramAddress_ + (3 * (sampleSize_ - fadeOutSize_));
+void Controller::sdram_fadeOut24BitAudio(void* ramAddress_, uint32_t sampleSize_, uint16_t fadeOutSize_) {
+    void* address = (void*)((uint8_t*)ramAddress_ + (3 * (sampleSize_ - fadeOutSize_)));
     float decrement = 1.0f / fadeOutSize_;
     float multiplier = 1.0f;
     for (uint16_t i = 0; i < fadeOutSize_; i++) {
-        uint32_t sampleAddress = address + (3 * i);
+        void* sampleAddress = (void*)((uint8_t*)address + (3 * i));
         int32_t input = sdram_read24BitAudio(sampleAddress);
         int32_t output = (int32_t)(input * multiplier);
         sdram_write24BitAudio(sampleAddress, output);
@@ -3334,9 +3360,9 @@ void Controller::lcd_drawLogo() {
         const RGB16Color *indexPtr = (const RGB16Color *)(RAM_IMAGE_LOGO_PALETTE_ADDRESS);
         const uint8_t *dataPtr = (const uint8_t *)(RAM_IMAGE_LOGO_DATA_ADDRESS);
         lcd.fadeRGB16Image(indexPtr, dataPtr, kImageLogoPalette, kImageLogoX, kImageLogoY, kImageLogoWidth, kImageLogoHeight, true, 40, 25);
-        HAL_Delay(1000);
+        // bspDelayMs(1000);
         lcd.fadeRGB16Image(indexPtr, dataPtr, kImageLogoPalette, kImageLogoX, kImageLogoY, kImageLogoWidth, kImageLogoHeight, false, 40, 25);
-        HAL_Delay(500);
+        // bspDelayMs(500);
         lcd.setForeColor(WHITE);
         lcd.setBackColor(BLACK);
         lcd.clearScreen();
@@ -3562,8 +3588,8 @@ void Controller::lcd_drawSdData() {
     char sdText[110] = {};
     char versionMajor[3];
     char versionMinor[3];
-    sprintf(versionMajor, "%01d", kVersionMajor);
-    sprintf(versionMinor, "%02d", kVersionMinor);
+    snprintf(versionMajor, sizeof(versionMajor), "%01d", kVersionMajor);
+    snprintf(versionMinor, sizeof(versionMinor), "%02d", kVersionMinor);
     strncpy(sdText, textTitle, 11);
     strncat(sdText, versionMajor, 2);
     strncat(sdText, &dot, 1);
@@ -3572,7 +3598,7 @@ void Controller::lcd_drawSdData() {
 
     if (sd.ready) {
         char numFree[6];
-        sprintf(numFree, "%05d", sd.freeSpace);
+        snprintf(numFree, sizeof(numFree), "%05d", sd.freeSpace);
         strcat(sdText, numFree);
     } else {
         strcat(sdText, "-----");
@@ -3582,7 +3608,7 @@ void Controller::lcd_drawSdData() {
 
     if (sd.ready) {
         char numFile[4];
-        sprintf(numFile, "%03d", fileLibrarySize);
+        snprintf(numFile, sizeof(numFile), "%03d", fileLibrarySize);
         strcat(sdText, numFile);
     } else {
         strcat(sdText, "---");
@@ -3592,7 +3618,7 @@ void Controller::lcd_drawSdData() {
 
     if (sd.ready) {
         char numSynthkit[4];
-        sprintf(numSynthkit, "%03d", synthkitLibrarySize);
+        snprintf(numSynthkit, sizeof(numSynthkit), "%03d", synthkitLibrarySize);
         strcat(sdText, numSynthkit);
     } else {
         strcat(sdText, "---");
@@ -3602,7 +3628,7 @@ void Controller::lcd_drawSdData() {
 
     if (sd.ready) {
         char numLfo[4];
-        sprintf(numLfo, "%03d", kMaxLfoType);
+        snprintf(numLfo, sizeof(numLfo), "%03d", kMaxLfoType);
         strcat(sdText, numLfo);
     } else {
         strcat(sdText, "---");
@@ -3613,10 +3639,10 @@ void Controller::lcd_drawSdData() {
     if (sd.ready) {
         char numWavetable[4];
         if (wavetableLibrarySize < 10000) {
-            sprintf(numWavetable, "%04d", wavetableLibrarySize);
+            snprintf(numWavetable, sizeof(numWavetable), "%04d", wavetableLibrarySize);
             strcat(sdText, numWavetable);
         } else {
-            sprintf(numWavetable, "%04d", wavetableLibrarySize / 1000);
+            snprintf(numWavetable, sizeof(numWavetable), "%04d", wavetableLibrarySize / 1000);
             strcat(sdText, numWavetable);
             strcat(sdText, "K");
         }
@@ -4306,7 +4332,6 @@ void Controller::lcd_drawMainMenu() {
     for (uint8_t i = 0; i < 8; i++) {
         lcd.drawText(title[i], 3, kMainMenuX[i], kMainMenuHeaderY);
     }
-
     lcd_drawMain_TempoData();
     lcd_drawMain_MeasureData();
     lcd_drawMain_BarData();
@@ -4322,7 +4347,7 @@ void Controller::lcd_drawMain_TempoData() {
     lcd.setFont(FONT_07x09);
     lcd.setForeColor(kLayerColorPalette[0]);
     char kTempoData[3];
-    sprintf(kTempoData, "%03d", rhythm.tempo);
+    snprintf(kTempoData, sizeof(kTempoData), "%03d", rhythm.tempo);
     lcd.drawText(kTempoData, 3, kMainMenuX[0], kMainMenuDataY);
 }
 
@@ -4331,7 +4356,7 @@ void Controller::lcd_drawMain_MeasureData() {
     lcd.setFont(FONT_07x09);
     lcd.setForeColor(kLayerColorPalette[1]);
     char kMeasureData[2];
-    sprintf(kMeasureData, "%02d", rhythm.measure);
+    snprintf(kMeasureData, sizeof(kMeasureData), "%02d", rhythm.measure);
     lcd.drawText(kMeasureData, 2, kMainMenuX[1], kMainMenuDataY);
 }
 
@@ -4340,7 +4365,7 @@ void Controller::lcd_drawMain_BarData() {
     lcd.setFont(FONT_07x09);
     lcd.setForeColor(kLayerColorPalette[2]);
     char kBarData[2];
-    sprintf(kBarData, "%02d", rhythm.bar);
+    snprintf(kBarData, sizeof(kBarData), "%02d", rhythm.bar);
     lcd.drawText(kBarData, 2, kMainMenuX[2], kMainMenuDataY);
 }
 
@@ -4411,7 +4436,7 @@ void Controller::lcd_drawFile_LoadData() {
     char *text;
     char file[11] = "  FILE_";
     char num[4];
-    sprintf(num, "%03d", fileMenuCounter + 1);
+    snprintf(num, sizeof(num), "%03d", fileMenuCounter + 1);
     strncat(file, num, 3);
     (menuTab == 1) ? text = file : text = (char *)kDataDashR;
     lcd.drawText(text, kMenuDataTextSize, kMenuData4X[1], kMenuDataY);
@@ -4422,7 +4447,7 @@ void Controller::lcd_drawFile_SaveData() {
     char *text;
     char file[11] = "  FILE_";
     char num[4];
-    sprintf(num, "%03d", fileMenuCounter + 1);
+    snprintf(num, sizeof(num), "%03d", fileMenuCounter + 1);
     strncat(file, num, 3);
     (menuTab == 2) ? text = file : text = (char *)kDataDashR;
     lcd.drawText(text, kMenuDataTextSize, kMenuData4X[2], kMenuDataY);
@@ -4433,7 +4458,7 @@ void Controller::lcd_drawFile_ClearData() {
     char *text;
     char file[11] = "  FILE_";
     char num[4];
-    sprintf(num, "%03d", fileMenuCounter + 1);
+    snprintf(num, sizeof(num), "%03d", fileMenuCounter + 1);
     strncat(file, num, 3);
     (menuTab == 3) ? text = file : text = (char *)kDataDashR;
     lcd.drawText(text, kMenuDataTextSize, kMenuData4X[3], kMenuDataY);
@@ -4471,7 +4496,7 @@ void Controller::lcd_drawSynthkit_LoadData() {
     char *text;
     char drum[11] = " SYNTH_";
     char num[4];
-    sprintf(num, "%03d", synthkitMenuCounter + 1);
+    snprintf(num, sizeof(num), "%03d", synthkitMenuCounter + 1);
     strncat(drum, num, 3);
     (menuTab == 1) ? text = drum : text = (char *)kDataDashR;
     lcd.drawText(text, kMenuDataTextSize, kMenuData4X[1], kMenuDataY);
@@ -4482,7 +4507,7 @@ void Controller::lcd_drawSynthkit_SaveData() {
     char *text;
     char drum[11] = " SYNTH_";
     char num[4];
-    sprintf(num, "%03d", synthkitMenuCounter + 1);
+    snprintf(num, sizeof(num), "%03d", synthkitMenuCounter + 1);
     strncat(drum, num, 3);
     (menuTab == 2) ? text = drum : text = (char *)kDataDashR;
     lcd.drawText(text, kMenuDataTextSize, kMenuData4X[2], kMenuDataY);
@@ -4493,7 +4518,7 @@ void Controller::lcd_drawSynthkit_ClearData() {
     char *text;
     char drum[11] = " SYNTH_";
     char num[4];
-    sprintf(num, "%03d", synthkitMenuCounter + 1);
+    snprintf(num, sizeof(num), "%03d", synthkitMenuCounter + 1);
     strncat(drum, num, 3);
     (menuTab == 3) ? text = drum : text = (char *)kDataDashR;
     lcd.drawText(text, kMenuDataTextSize, kMenuData4X[3], kMenuDataY);
@@ -4593,7 +4618,7 @@ void Controller::lcd_drawRhythmMenu() {
 void Controller::lcd_drawRhythm_TempoData() {
     lcd_setMenuDataState(WHITE);
     char kData[kMenuDataTextSize];
-    sprintf(kData, "       %03d", rhythm.tempo);
+    snprintf(kData, sizeof(kData), "       %03d", rhythm.tempo);
     lcd.drawText(kData, kMenuDataTextSize, kMenuData4X[0], kMenuDataY);
 
     if (system.sync.slaveMode) {
@@ -4908,7 +4933,7 @@ void Controller::lcd_drawOsc_WavetableData(Osc &osc_) {
 void Controller::lcd_drawOsc_LevelData(Osc &osc_) {
     lcd_setMenuDataState(WHITE);
     char kData[kMenuDataShortTextSize + 1];
-    (osc_.level == kMaxOscLevel) ? sprintf(kData, " %03d", osc_.level) : sprintf(kData, "  %02d", osc_.level);
+    (osc_.level == kMaxOscLevel) ? snprintf(kData, sizeof(kData), " %03d", osc_.level) : snprintf(kData, sizeof(kData), "  %02d", osc_.level);
     lcd.drawText(kData, kMenuDataShortTextSize, kMenuData8X[4] + 2, kMenuDataY);
 }
 
@@ -4933,7 +4958,7 @@ void Controller::lcd_drawOsc_StartData(Osc &osc_) {
     lcd_setMenuDataState(WHITE);
     if (osc_.wavetableLoaded != -1) {
         char text[5];
-        (osc_.waveStart >= 99) ? sprintf(text, " %03d", osc_.waveStart + 1) : sprintf(text, "  %02d", osc_.waveStart + 1);
+        (osc_.waveStart >= 99) ? snprintf(text, sizeof(text), " %03d", osc_.waveStart + 1) : snprintf(text, sizeof(text), "  %02d", osc_.waveStart + 1);
         lcd.drawText(text, kMenuDataShortTextSize, kMenuData8X[4] + 2, kMenuDataY);
     } else {
         lcd.drawText("  --", kMenuDataShortTextSize, kMenuData8X[4] + 2, kMenuDataY);
@@ -4944,7 +4969,7 @@ void Controller::lcd_drawOsc_EndData(Osc &osc_) {
     lcd_setMenuDataState(WHITE);
     if (osc_.wavetableLoaded != -1) {
         char text[5];
-        (osc_.waveEnd >= 99) ? sprintf(text, " %03d", osc_.waveEnd + 1) : sprintf(text, "  %02d", osc_.waveEnd + 1);
+        (osc_.waveEnd >= 99) ? snprintf(text, sizeof(text), " %03d", osc_.waveEnd + 1) : snprintf(text, sizeof(text), "  %02d", osc_.waveEnd + 1);
         lcd.drawText(text, kMenuDataShortTextSize, kMenuData8X[5] + 2, kMenuDataY);
     } else {
         lcd.drawText(" --", kMenuDataShortTextSize, kMenuData8X[5] + 2, kMenuDataY);
@@ -5684,8 +5709,8 @@ void Controller::lcd_drawSong_BeatData() {
     if (bank.lastActiveBeatNum != -1) {
         char num0[3];
         char num1[3];
-        sprintf(num0, "%02d", selectedBeatNum + 1);
-        sprintf(num1, "%02d", bank.lastActiveBeatNum + 1);
+        snprintf(num0, sizeof(num0), "%02d", selectedBeatNum + 1);
+        snprintf(num1, sizeof(num1), "%02d", bank.lastActiveBeatNum + 1);
         strcpy(numText, num0);
         strcat(numText, "|");
         strcat(numText, num1);
@@ -5718,20 +5743,20 @@ void Controller::lcd_drawSong_BeatGraph() {
 
         lcd.drawText(kDataDot, 1, kBeatGraphStartTimeX + 14, kBeatGraphTimeY);
         lcd.drawText(kDataDot, 1, kBeatGraphStartTimeX + 35, kBeatGraphTimeY);
-        sprintf(text, "%02d", startBar);
+        snprintf(text, sizeof(text), "%02d", startBar);
         lcd.drawText(text, 2, kBeatGraphStartTimeX, kBeatGraphTimeY);
-        sprintf(text, "%02d", startMeasure);
+        snprintf(text, sizeof(text), "%02d", startMeasure);
         lcd.drawText(text, 2, kBeatGraphStartTimeX + 21, kBeatGraphTimeY);
-        sprintf(text, "%02d", startRemainder);
+        snprintf(text, sizeof(text), "%02d", startRemainder);
         lcd.drawText(text, 2, kBeatGraphStartTimeX + 42, kBeatGraphTimeY);
 
         lcd.drawText(kDataDot, 1, kBeatGraphEndTimeX + 14, kBeatGraphTimeY);
         lcd.drawText(kDataDot, 1, kBeatGraphEndTimeX + 35, kBeatGraphTimeY);
-        sprintf(text, "%02d", endBar);
+        snprintf(text, sizeof(text), "%02d", endBar);
         lcd.drawText(text, 2, kBeatGraphEndTimeX, kBeatGraphTimeY);
-        sprintf(text, "%02d", endMeasure);
+        snprintf(text, sizeof(text), "%02d", endMeasure);
         lcd.drawText(text, 2, kBeatGraphEndTimeX + 21, kBeatGraphTimeY);
-        sprintf(text, "%02d", endRemainder);
+        snprintf(text, sizeof(text), "%02d", endRemainder);
         lcd.drawText(text, 2, kBeatGraphEndTimeX + 42, kBeatGraphTimeY);
     } else {
         // lcd.clearRect(420, 28, 32, 5);
@@ -5934,7 +5959,7 @@ void Controller::lcd_drawCountDown() {
             lcd.setBackColor(BLACK);
             lcd.setForeColor(kLayerColorPalette[9]);
             char kCountDownData[1];
-            sprintf(kCountDownData, "%01d", metronome.countDown);
+            snprintf(kCountDownData, sizeof(kCountDownData), "%01d", metronome.countDown);
             lcd.drawText(kCountDownData, 1, 99, 110);
             metronome.countDown -= 1;
         } else {
@@ -6435,7 +6460,7 @@ void Controller::lcd_drawInfo_Osc_LevelData(Osc &osc_) {
     lcd.setFont(FONT_05x07);
     lcd.setAlignment(LEFT);
     char kData[5];
-    sprintf(kData, "%03d ", osc_.level);
+    snprintf(kData, sizeof(kData), "%03d ", osc_.level);
     lcd.drawText(kData, kMenuDataShortTextSize, xPos, yPos);
 }
 
@@ -6503,6 +6528,10 @@ void Controller::lcd_drawInfo_Osc_PhaseData(Osc &osc_) {
     lcd.drawVLine(kInfoPhaseX1[osc_.number][osc_.phase], kInfoPhaseY1, 3);
 }
 
+void* const kRamWavetableAddressLibrary[2][2] = {
+    {RAM_WAVETABLE_0A, RAM_WAVETABLE_0B},
+    {RAM_WAVETABLE_1A, RAM_WAVETABLE_1B}};
+
 void Controller::lcd_drawInfo_Osc_GraphData(Osc &osc_) {
     uint16_t xPos;
     uint16_t yPos;
@@ -6539,7 +6568,7 @@ void Controller::lcd_drawInfo_Osc_GraphData(Osc &osc_) {
             uint16_t offset;
             (flipY) ? offset = 4094 - (i * 50 * 2) : offset = i * 50 * 2;
             int16_t data =
-                (int16_t)((sdram_read16BitAudio(kRamWavetableAddressLibrary[osc_.number][osc_.playWavetableSector] + (osc_.waveStart * 2048 * 2) + offset) / 32767.0f) * 22);
+                (int16_t)((sdram_read16BitAudio((uint8_t*)kRamWavetableAddressLibrary[osc_.number][osc_.playWavetableSector] + (osc_.waveStart * 2048 * 2) + offset) / 32767.0f) * 22); // TODO!
             (flipX) ? data *= -1 : data = data;
             if (data > 0) {
                 lcd.drawVLine(xPos, yPos + (22 - data), data);
@@ -6560,7 +6589,7 @@ void Controller::lcd_drawInfo_Osc_GraphData(Osc &osc_) {
             uint16_t offset;
             (flipY) ? offset = 4094 - (i * 50 * 2) : offset = i * 50 * 2;
             int16_t data =
-                (int16_t)((sdram_read16BitAudio(kRamWavetableAddressLibrary[osc_.number][osc_.playWavetableSector] + (osc_.waveEnd * 2048 * 2) + offset) / 32767.0f) * 22);
+                (int16_t)((sdram_read16BitAudio((uint8_t*)kRamWavetableAddressLibrary[osc_.number][osc_.playWavetableSector] + (osc_.waveEnd * 2048 * 2) + offset) / 32767.0f) * 22); // TODO!
             (flipX) ? data *= -1 : data = data;
             if (data > 0) {
                 lcd.drawVLine(xPos, yPos + (22 - data), data);
@@ -7316,7 +7345,7 @@ void Controller::file_loadAction() {
     copyBankSongNum = -1;
 
     lcd_drawAlert();
-    HAL_Delay(1000);
+    bspDelayMs(1000);
     lcd_clearAlert();
 }
 
@@ -7337,7 +7366,7 @@ void Controller::file_saveAction() {
     lcd_drawSdData();
 
     lcd_drawAlert();
-    HAL_Delay(1000);
+    bspDelayMs(1000);
     lcd_clearAlert();
 }
 
@@ -7360,7 +7389,7 @@ void Controller::file_clearAction() {
     lcd_drawSdData();
 
     lcd_drawAlert();
-    HAL_Delay(1000);
+    bspDelayMs(1000);
     lcd_clearAlert();
 }
 
@@ -7543,7 +7572,7 @@ void Controller::synthkit_loadAction() {
     }
 
     lcd_drawAlert();
-    HAL_Delay(1000);
+    bspDelayMs(1000);
     lcd_clearAlert();
 }
 
@@ -7564,7 +7593,7 @@ void Controller::synthkit_saveAction() {
     lcd_drawSdData();
 
     lcd_drawAlert();
-    HAL_Delay(1000);
+    bspDelayMs(1000);
     lcd_clearAlert();
 }
 
@@ -7587,7 +7616,7 @@ void Controller::synthkit_clearAction() {
     lcd_drawSdData();
 
     lcd_drawAlert();
-    HAL_Delay(1000);
+    bspDelayMs(1000);
     lcd_clearAlert();
 }
 
@@ -7822,13 +7851,13 @@ void Controller::system_setSyncOut(uint8_t mode_) {
         system.syncOut = mode_;
         switch (mode_) {
         case 0: // off
-            HAL_GPIO_WritePin(SYNC_OUT_RX_GPIO_Port, SYNC_OUT_RX_Pin, GPIO_PIN_RESET);
+            bspGpioSet(GPIO_SYNC_OUT, false);
             break;
         case 1: // mode-rw
-            HAL_GPIO_WritePin(SYNC_OUT_RX_GPIO_Port, SYNC_OUT_RX_Pin, GPIO_PIN_SET);
+            bspGpioSet(GPIO_SYNC_OUT, true);
             break;
-        case 2: // mode-st
-            HAL_GPIO_WritePin(SYNC_OUT_RX_GPIO_Port, SYNC_OUT_RX_Pin, GPIO_PIN_RESET);
+            case 2: // mode-st
+            bspGpioSet(GPIO_SYNC_OUT, false);
             break;
         }
         system.sync.syncOutTempo = kSystemSyncOutDataLibrary[system.syncOut].tempoTrigger;
@@ -9364,7 +9393,7 @@ void Controller::osc_setWavetableSelected(Osc &osc_, int16_t wavetable_) {
         memset(&(osc_.wavSelectedData), 0x00, sizeof(WavData));
         if (wavetable_ != -1) {
             // set num data
-            sprintf(osc_.wavetableSelectedData.num, "%04d",
+            snprintf(osc_.wavetableSelectedData.num, sizeof(osc_.wavetableSelectedData.num), "%04d",
                     osc_.wavetableSelected + 1);
             // read sd data
             char temp[kFileNameSize + 1];
@@ -9779,7 +9808,7 @@ void Controller::osc_setWavetableLoaded(Osc &osc_, bool view_) {
                                     minData = writeData;
                                 if (writeData > maxData)
                                     maxData = writeData;
-                                sdram_write16BitAudio(kRamWavetableAddressLibrary[osc_.number][osc_.writeWavetableSector] + (sdramDataCounter * 2), writeData);
+                                sdram_write16BitAudio((uint8_t*)kRamWavetableAddressLibrary[osc_.number][osc_.writeWavetableSector] + (sdramDataCounter * 2), writeData); // TODO
                                 sdramDataCounter += 1;
                             }
                         }
@@ -13889,12 +13918,12 @@ void Controller::calculateBeatPlayData(uint8_t beatNum_) {
                             arrayCounterHi = 0;
                         float arrayCounterDiff = arrayCounter - arrayCounterLo;
 
-                        int16_t *dataLoLo = (int16_t *)(oD.address + ((waveCounterLo * 4096) + (arrayCounterLo * 2)));
-                        int16_t *dataLoHi = (int16_t *)(oD.address + ((waveCounterLo * 4096) + (arrayCounterHi * 2)));
+                        int16_t *dataLoLo = (int16_t *)((uint8_t*)oD.address + ((waveCounterLo * 4096) + (arrayCounterLo * 2))); // TODO: eeewwww!!!
+                        int16_t *dataLoHi = (int16_t *)((uint8_t*)oD.address + ((waveCounterLo * 4096) + (arrayCounterHi * 2))); // wtf, do normal pointers, man!
                         int16_t dataLo = *dataLoLo + ((*dataLoHi - *dataLoLo) * arrayCounterDiff);
 
-                        int16_t *dataHiLo = (int16_t *)(oD.address + ((waveCounterHi * 4096) + (arrayCounterLo * 2)));
-                        int16_t *dataHiHi = (int16_t *)(oD.address + ((waveCounterHi * 4096) + (arrayCounterHi * 2)));
+                        int16_t *dataHiLo = (int16_t *)((uint8_t*)oD.address + ((waveCounterHi * 4096) + (arrayCounterLo * 2)));
+                        int16_t *dataHiHi = (int16_t *)((uint8_t*)oD.address + ((waveCounterHi * 4096) + (arrayCounterHi * 2)));
                         int16_t dataHi = *dataHiLo + ((*dataHiHi - *dataHiLo) * arrayCounterDiff);
 
                         oD.data[oD.sampleCounter] = dataLo + ((dataHi - dataLo) * waveCounterDiff);
@@ -13915,8 +13944,8 @@ void Controller::calculateBeatPlayData(uint8_t beatNum_) {
 
                         uint16_t waveCounter = (uint16_t)oD.waveCurrent;
 
-                        int16_t *dataLo = (int16_t *)(oD.address + ((waveCounter * 4096) + (arrayCounterLo * 2)));
-                        int16_t *dataHi = (int16_t *)(oD.address + ((waveCounter * 4096) + (arrayCounterHi * 2)));
+                        int16_t *dataLo = (int16_t *)((uint8_t*)oD.address + ((waveCounter * 4096) + (arrayCounterLo * 2)));
+                        int16_t *dataHi = (int16_t *)((uint8_t*)oD.address + ((waveCounter * 4096) + (arrayCounterHi * 2)));
                         oD.data[oD.sampleCounter] =
                             *dataLo + ((*dataHi - *dataLo) * arrayCounterDiff);
                         if (oD.normalize)
@@ -14109,6 +14138,14 @@ bool Controller::checkSdramReadActive() {
 
 /* Interrupt functions -------------------------------------------------------*/
 
+void* const kRamMetronomeAddressLibrary[5][2] = {
+    {RAM_METRO_0A, RAM_METRO_0B},
+    {RAM_METRO_1A, RAM_METRO_1B},
+    {RAM_METRO_2A, RAM_METRO_2B},
+    {RAM_METRO_3A, RAM_METRO_3B},
+    {RAM_METRO_4A, RAM_METRO_4B},
+};
+
 void Controller::interruptPlay() {
     // metro pre count state
     if (metronome.precountState) {
@@ -14165,7 +14202,7 @@ void Controller::interruptPlay() {
 
         // beat sync
         if ((system.syncOut == 2) && (playInterval % kMeasureHalfInterval == 0)) {
-            SYNC_OUT_ON;
+            bspGpioSet(GPIO_SYNC_OUT, true);
             startBeatSyncTimer();
         }
 
@@ -14272,7 +14309,7 @@ void Controller::interruptAudioMetronome() {
     audioMetronome = 0;
 
     if (mD.active) {
-        uint32_t address = (uint32_t)(mD.ramAddress + (mD.counter * 3));
+        void* address = (void*)((uint8_t*)mD.ramAddress + (mD.counter * 3)); // TODO!
         audioMetronome = (sdram_read24BitAudio(address) << 8) * mD.volumeMultiplier;
 
         if (mD.counter < mD.counterMax) {
@@ -14666,8 +14703,8 @@ int32_t Controller::processAudioEffect(uint8_t effectNum_, int32_t audio_) {
         if (type == EF_DELAY) {
             Delay &delay_ = effect_.delay;
 
-            volatile int32_t *playPtr = (volatile int32_t *)(effect_.delayAddress + (delay_.playInterval * 4));
-            volatile int32_t *recordPtr = (volatile int32_t *)(effect_.delayAddress + (delay_.recordInterval * 4));
+            volatile int32_t *playPtr = (volatile int32_t *)((uint8_t*)effect_.delayAddress + (delay_.playInterval * 4));
+            volatile int32_t *recordPtr = (volatile int32_t *)((uint8_t*)effect_.delayAddress + (delay_.recordInterval * 4));
 
             int32_t playData = input + *playPtr;
 
@@ -14713,8 +14750,8 @@ int32_t Controller::processAudioEffect(uint8_t effectNum_, int32_t audio_) {
                 if (interval_Int1 == kChorusBufferSize)
                     interval_Int1 = 0;
 
-                volatile int32_t *dataPtr0 = (volatile int32_t *)(effect_.chorusAddress + (interval_Int0 * 4));
-                volatile int32_t *dataPtr1 = (volatile int32_t *)(effect_.chorusAddress + (interval_Int1 * 4));
+                volatile int32_t *dataPtr0 = (volatile int32_t *)((uint8_t*)effect_.chorusAddress + (interval_Int0 * 4)); // TODO: eww!
+                volatile int32_t *dataPtr1 = (volatile int32_t *)((uint8_t*)effect_.chorusAddress + (interval_Int1 * 4));
                 dataChorusDelay[i] = *dataPtr0 + ((*dataPtr1 - *dataPtr0) * remainder);
 
                 cD.shiftInterval += cD.shiftInc;
@@ -14732,7 +14769,7 @@ int32_t Controller::processAudioEffect(uint8_t effectNum_, int32_t audio_) {
 
             dataChorus = (dataChorusDelay[0] * chorus_.chorusDelay[0].mix) + (dataChorusDelay[1] * chorus_.chorusDelay[1].mix);
 
-            volatile int32_t *recordPtr = (volatile int32_t *)(effect_.chorusAddress + (chorus_.recordInterval * 4));
+            volatile int32_t *recordPtr = (volatile int32_t *)((uint8_t*)effect_.chorusAddress + (chorus_.recordInterval * 4));
 
             if (effect_.genTransition.active) {
                 *recordPtr = (input + (dataChorus * chorus_.feedback)) * effect_.genTransition.activeRecordWet;
@@ -15735,181 +15772,134 @@ void Controller::interruptTransition() {
     }
 }
 
-void Controller::interruptLeftButtonTrigger() {
-    keyboard.leftButtonState = PREWAIT;
-    keyboard.leftButtonCounter = 0;
-    startLeftButtonTimer();
-}
+// void Controller::interruptLeftButtonTrigger() {
+//     keyboard.leftButtonState = PREWAIT;
+//     keyboard.leftButtonCounter = 0;
+//     startLeftButtonTimer();
+// }
 
-void Controller::interruptRightButtonTrigger() {
-    keyboard.rightButtonState = PREWAIT;
-    keyboard.rightButtonCounter = 0;
-    startRightButtonTimer();
-}
+// void Controller::interruptRightButtonTrigger() {
+//     keyboard.rightButtonState = PREWAIT;
+//     keyboard.rightButtonCounter = 0;
+//     startRightButtonTimer();
+// }
 
-void Controller::interruptBeatButtonTrigger() {
-    keyboard.beatButtonState = PREWAIT;
-    keyboard.beatButtonCounter = 0;
-    startBeatButtonTimer();
-}
+// void Controller::interruptBeatButtonTrigger() {
+//     keyboard.beatButtonState = PREWAIT;
+//     keyboard.beatButtonCounter = 0;
+//     startBeatButtonTimer();
+// }
 
 void Controller::interruptLeftButtonRead() {
-    switch (keyboard.leftButtonState) {
-    case PASSIVE:
-        break;
-
-    case PREWAIT:
-        if (keyboard.leftButtonCounter < 50) {
-            keyboard.leftButtonCounter += 1;
-        } else {
-            keyboard.leftButtonState = READ;
-            keyboard.leftButtonCounter = 0;
-        }
-        break;
-
-    case READ:
-        if (keyboard.leftButtonCounter < 32) {
-            switch (keyboard.leftButtonCounter % 2) {
-            case 0:
-                CT0_SCL_LOW;
-                break;
-
-            case 1:
-                bool value = CT0_SDO_READ;
-                if (!value) {
-                    keyboard.leftButtonTemp = (keyboard.leftButtonCounter / 2) + 1;
-                }
-                CT0_SCL_HIGH;
-                break;
-            }
-            keyboard.leftButtonCounter += 1;
-        } else {
-            keyboard.leftButtonState = POSTWAIT;
-            keyboard.leftButtonCounter = 0;
-        }
-        break;
-
-    case POSTWAIT:
-        if (keyboard.leftButtonCounter < 1000) {
-            keyboard.leftButtonCounter += 1;
-        } else {
-            keyboard.leftButtonState = PASSIVE;
-            keyboard.leftButtonCounter = 0;
-            keyboard.leftButton = keyboard.leftButtonTemp;
-            keyboard.leftButtonTemp = 0;
-            stopLeftButtonTimer();
-        }
-        break;
-
-    default:
-        break;
-    }
+    // TODO
 }
 
 void Controller::interruptRightButtonRead() {
-    switch (keyboard.rightButtonState) {
-    case PASSIVE:
-        break;
+    // TODO
+//     switch (keyboard.rightButtonState) {
+//     case PASSIVE:
+//         break;
 
-    case PREWAIT:
-        if (keyboard.rightButtonCounter < 50) {
-            keyboard.rightButtonCounter += 1;
-        } else {
-            keyboard.rightButtonState = READ;
-            keyboard.rightButtonCounter = 0;
-        }
-        break;
+//     case PREWAIT:
+//         if (keyboard.rightButtonCounter < 50) {
+//             keyboard.rightButtonCounter += 1;
+//         } else {
+//             keyboard.rightButtonState = READ;
+//             keyboard.rightButtonCounter = 0;
+//         }
+//         break;
 
-    case READ:
-        if (keyboard.rightButtonCounter < 32) {
-            switch (keyboard.rightButtonCounter % 2) {
-            case 0:
-                CT1_SCL_LOW;
-                break;
+//     case READ:
+//         if (keyboard.rightButtonCounter < 32) {
+//             switch (keyboard.rightButtonCounter % 2) {
+//             case 0:
+//                 CT1_SCL_LOW;
+//                 break;
 
-            case 1:
-                bool value = CT1_SDO_READ;
-                if (!value) {
-                    keyboard.rightButtonTemp = (keyboard.rightButtonCounter / 2) + 1;
-                }
-                CT1_SCL_HIGH;
-                break;
-            }
-            keyboard.rightButtonCounter += 1;
-        } else {
-            keyboard.rightButtonState = POSTWAIT;
-            keyboard.rightButtonCounter = 0;
-        }
-        break;
+//             case 1:
+//                 bool value = CT1_SDO_READ;
+//                 if (!value) {
+//                     keyboard.rightButtonTemp = (keyboard.rightButtonCounter / 2) + 1;
+//                 }
+//                 CT1_SCL_HIGH;
+//                 break;
+//             }
+//             keyboard.rightButtonCounter += 1;
+//         } else {
+//             keyboard.rightButtonState = POSTWAIT;
+//             keyboard.rightButtonCounter = 0;
+//         }
+//         break;
 
-    case POSTWAIT:
-        if (keyboard.rightButtonCounter < 1000) {
-            keyboard.rightButtonCounter += 1;
-        } else {
-            keyboard.rightButtonState = PASSIVE;
-            keyboard.rightButtonCounter = 0;
-            keyboard.rightButton = keyboard.rightButtonTemp;
-            keyboard.rightButtonTemp = 0;
-            stopRightButtonTimer();
-        }
-        break;
+//     case POSTWAIT:
+//         if (keyboard.rightButtonCounter < 1000) {
+//             keyboard.rightButtonCounter += 1;
+//         } else {
+//             keyboard.rightButtonState = PASSIVE;
+//             keyboard.rightButtonCounter = 0;
+//             keyboard.rightButton = keyboard.rightButtonTemp;
+//             keyboard.rightButtonTemp = 0;
+//             stopRightButtonTimer();
+//         }
+//         break;
 
-    default:
-        break;
-    }
+//     default:
+//         break;
+//     }
 }
 
 void Controller::interruptBeatButtonRead() {
-    switch (keyboard.beatButtonState) {
-    case PASSIVE:
-        break;
+    // TODO!!!!
+    // switch (keyboard.beatButtonState) {
+    // case PASSIVE:
+    //     break;
 
-    case PREWAIT:
-        if (keyboard.beatButtonCounter < 50) {
-            keyboard.beatButtonCounter += 1;
-        } else {
-            keyboard.beatButtonState = READ;
-            keyboard.beatButtonCounter = 0;
-        }
-        break;
+    // case PREWAIT:
+    //     if (keyboard.beatButtonCounter < 50) {
+    //         keyboard.beatButtonCounter += 1;
+    //     } else {
+    //         keyboard.beatButtonState = READ;
+    //         keyboard.beatButtonCounter = 0;
+    //     }
+    //     break;
 
-    case READ:
-        if (keyboard.beatButtonCounter < 32) {
-            switch (keyboard.beatButtonCounter % 2) {
-            case 0:
-                CT2_SCL_LOW;
-                break;
+    // case READ:
+    //     if (keyboard.beatButtonCounter < 32) {
+    //         switch (keyboard.beatButtonCounter % 2) {
+    //         case 0:
+    //             CT2_SCL_LOW;
+    //             break;
 
-            case 1:
-                bool value = CT2_SDO_READ;
-                if (!value) {
-                    keyboard.beatButtonTemp = (keyboard.beatButtonCounter / 2) + 1;
-                }
-                CT2_SCL_HIGH;
-                break;
-            }
-            keyboard.beatButtonCounter += 1;
-        } else {
-            keyboard.beatButtonState = POSTWAIT;
-            keyboard.beatButtonCounter = 0;
-        }
-        break;
+    //         case 1:
+    //             bool value = CT2_SDO_READ;
+    //             if (!value) {
+    //                 keyboard.beatButtonTemp = (keyboard.beatButtonCounter / 2) + 1;
+    //             }
+    //             CT2_SCL_HIGH;
+    //             break;
+    //         }
+    //         keyboard.beatButtonCounter += 1;
+    //     } else {
+    //         keyboard.beatButtonState = POSTWAIT;
+    //         keyboard.beatButtonCounter = 0;
+    //     }
+    //     break;
 
-    case POSTWAIT:
-        if (keyboard.beatButtonCounter < 1000) {
-            keyboard.beatButtonCounter += 1;
-        } else {
-            keyboard.beatButtonState = PASSIVE;
-            keyboard.beatButtonCounter = 0;
-            keyboard.beatButton = keyboard.beatButtonTemp;
-            keyboard.beatButtonTemp = 0;
-            stopBeatButtonTimer();
-        }
-        break;
+    // case POSTWAIT:
+    //     if (keyboard.beatButtonCounter < 1000) {
+    //         keyboard.beatButtonCounter += 1;
+    //     } else {
+    //         keyboard.beatButtonState = PASSIVE;
+    //         keyboard.beatButtonCounter = 0;
+    //         keyboard.beatButton = keyboard.beatButtonTemp;
+    //         keyboard.beatButtonTemp = 0;
+    //         stopBeatButtonTimer();
+    //     }
+    //     break;
 
-    default:
-        break;
-    }
+    // default:
+    //     break;
+    // }
 }
 
 void Controller::interruptUpDownButtonRead() {
@@ -16286,7 +16276,7 @@ void Controller::interruptSd() {
 }
 
 void Controller::interruptBeatSync() {
-    SYNC_OUT_OFF;
+    bspGpioSet(GPIO_SYNC_OUT, false);
     stopBeatSyncTimer();
 }
 

@@ -3,9 +3,19 @@
 
 #include <cmath>
 
-#include "fatfs.h"
-#include "main.h"
-#include "sdmmc.h"
+#include <stdint.h>
+// #include "panel.h"
+// #include "fatfs.h"
+#include "ff.h"
+// #include "main.h"
+// #include "sdmmc.h"
+// #include "string.h"
+#include <string.h>
+// #include <math.h>
+
+#ifndef M_PI
+#define M_PI    3.14159265358979323846264338327950288   /**< pi */
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 /* Application Version -------------------------------------------------------*/
@@ -51,19 +61,19 @@ typedef enum {
     FILE_ACTIVE = 0x04,
 } FileStatus;
 
-#define LED0_ON HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_SET)
-#define LED1_ON HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET)
-#define LED2_ON HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET)
-#define SYNC_OUT_ON HAL_GPIO_WritePin(SYNC_OUT_GPIO_Port, SYNC_OUT_Pin, GPIO_PIN_SET)
+// #define LED0_ON HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_SET)
+// #define LED1_ON HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET)
+// #define LED2_ON HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET)
+// #define SYNC_OUT_ON HAL_GPIO_WritePin(SYNC_OUT_GPIO_Port, SYNC_OUT_Pin, GPIO_PIN_SET)
 
-#define LED0_OFF HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_RESET)
-#define LED1_OFF HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET)
-#define LED2_OFF HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET)
-#define SYNC_OUT_OFF HAL_GPIO_WritePin(SYNC_OUT_GPIO_Port, SYNC_OUT_Pin, GPIO_PIN_RESET)
+// #define LED0_OFF HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_RESET)
+// #define LED1_OFF HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET)
+// #define LED2_OFF HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET)
+// #define SYNC_OUT_OFF HAL_GPIO_WritePin(SYNC_OUT_GPIO_Port, SYNC_OUT_Pin, GPIO_PIN_RESET)
 
-#define LED0_TOGGLE HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin)
-#define LED1_TOGGLE HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin)
-#define LED2_TOGGLE HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin)
+// #define LED0_TOGGLE HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin)
+// #define LED1_TOGGLE HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin)
+// #define LED2_TOGGLE HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin)
 
 ////////////////////////////////////////////////////////////////////////////////
 /* Ram Addresses -------------------------------------------------------------*/
@@ -76,90 +86,99 @@ typedef enum {
 /* RAM_D1 0x24000000 320KB ---------------------------------------------------*/
 
 /* RAM_D2 0x30000000 32KB ----------------------------------------------------*/
+// #define RAM_D2_OFFSET 0x30000000
+extern uint8_t emu_ram_d2[32 * 1024];
+#define RAM_D2_OFFSET (&emu_ram_d2[0])
 
-#define RAM_ICON_SELECT_ADDRESS 0x300011B0
-#define RAM_ICON_SELECT_PALETTE_ADDRESS 0x300011B0 // 128 bytes
-#define RAM_ICON_SELECT_DATA_ADDRESS 0x30001230
-#define RAM_ICON_SELECT_ON_DATA_ADDRESS 0x30001230  // 121 bytes
-#define RAM_ICON_SELECT_OFF_DATA_ADDRESS 0x300012A9 // 121 bytes
+#define RAM_ICON_SELECT_ADDRESS (RAM_D2_OFFSET + 0x11B0)
+#define RAM_ICON_SELECT_PALETTE_ADDRESS (RAM_D2_OFFSET + 0x11B0) // 128 bytes
+#define RAM_ICON_SELECT_DATA_ADDRESS (RAM_D2_OFFSET + 0x1230)
+#define RAM_ICON_SELECT_ON_DATA_ADDRESS (RAM_D2_OFFSET + 0x1230)  // 121 bytes
+#define RAM_ICON_SELECT_OFF_DATA_ADDRESS (RAM_D2_OFFSET + 0x12A9) // 121 bytes
 
-#define RAM_ICON_ALERT_ADDRESS 0x30001322
-#define RAM_ICON_ALERT_PALETTE_ADDRESS 0x30001322 // 128 bytes
-#define RAM_ICON_ALERT_DATA_ADDRESS 0x300013A2
-#define RAM_ICON_ALERT_L_DATA_ADDRESS 0x300013A2 // 361 bytes
-#define RAM_ICON_ALERT_R_DATA_ADDRESS 0x3000150B // 361 bytes
+#define RAM_ICON_ALERT_ADDRESS (RAM_D2_OFFSET + 0x1322)
+#define RAM_ICON_ALERT_PALETTE_ADDRESS (RAM_D2_OFFSET + 0x1322) // 128 bytes
+#define RAM_ICON_ALERT_DATA_ADDRESS (RAM_D2_OFFSET + 0x13A2)
+#define RAM_ICON_ALERT_L_DATA_ADDRESS (RAM_D2_OFFSET + 0x13A2) // 361 bytes
+#define RAM_ICON_ALERT_R_DATA_ADDRESS (RAM_D2_OFFSET + 0x150B) // 361 bytes
 
-#define RAM_ICON_PLAY_ADDRESS 0x30001674
-#define RAM_ICON_PLAY_PALETTE_ADDRESS 0x30001674 // 128 bytes
-#define RAM_ICON_PLAY_DATA_ADDRESS 0x300016F4
-#define RAM_ICON_PLAY_RESET_ON_DATA_ADDRESS 0x300016F4   // 81 bytes
-#define RAM_ICON_PLAY_STOP_ON_DATA_ADDRESS 0x30001745    // 81 bytes
-#define RAM_ICON_PLAY_PLAY_ON_DATA_ADDRESS 0x30001796    // 81 bytes
-#define RAM_ICON_PLAY_RECORD_ON_DATA_ADDRESS 0x300017E7  // 81 bytes
-#define RAM_ICON_PLAY_RESET_OFF_DATA_ADDRESS 0x30001838  // 81 bytes
-#define RAM_ICON_PLAY_STOP_OFF_DATA_ADDRESS 0x30001889   // 81 bytes
-#define RAM_ICON_PLAY_PLAY_OFF_DATA_ADDRESS 0x300018DA   // 81 bytes
-#define RAM_ICON_PLAY_RECORD_OFF_DATA_ADDRESS 0x3000192B // 81 bytes
+#define RAM_ICON_PLAY_ADDRESS (RAM_D2_OFFSET + 0x1674)
+#define RAM_ICON_PLAY_PALETTE_ADDRESS (RAM_D2_OFFSET + 0x1674) // 128 bytes
+#define RAM_ICON_PLAY_DATA_ADDRESS (RAM_D2_OFFSET + 0x16F4)
+#define RAM_ICON_PLAY_RESET_ON_DATA_ADDRESS (RAM_D2_OFFSET + 0x16F4)   // 81 bytes
+#define RAM_ICON_PLAY_STOP_ON_DATA_ADDRESS (RAM_D2_OFFSET + 0x1745)    // 81 bytes
+#define RAM_ICON_PLAY_PLAY_ON_DATA_ADDRESS (RAM_D2_OFFSET + 0x1796)    // 81 bytes
+#define RAM_ICON_PLAY_RECORD_ON_DATA_ADDRESS (RAM_D2_OFFSET + 0x17E7)  // 81 bytes
+#define RAM_ICON_PLAY_RESET_OFF_DATA_ADDRESS (RAM_D2_OFFSET + 0x1838)  // 81 bytes
+#define RAM_ICON_PLAY_STOP_OFF_DATA_ADDRESS (RAM_D2_OFFSET + 0x1889)   // 81 bytes
+#define RAM_ICON_PLAY_PLAY_OFF_DATA_ADDRESS (RAM_D2_OFFSET + 0x18DA)   // 81 bytes
+#define RAM_ICON_PLAY_RECORD_OFF_DATA_ADDRESS (RAM_D2_OFFSET + 0x192B) // 81 bytes
 
-#define RAM_BUTTON_KEY_ADDRESS 0x300019AB         // 99px * 26 px
-#define RAM_BUTTON_KEY_PALETTE_ADDRESS 0x300019AB // 128 bytes
-#define RAM_BUTTON_KEY_DATA_ADDRESS 0x30001A2B
-#define RAM_BUTTON_KEY_OFF_DATA_ADDRESS 0x30001A2B // 1287 bytes
-#define RAM_BUTTON_KEY_ON_DATA_ADDRESS 0x30001F32  // 1287 bytes
+#define RAM_BUTTON_KEY_ADDRESS (RAM_D2_OFFSET + 0x19AB)         // 99px * 26 px
+#define RAM_BUTTON_KEY_PALETTE_ADDRESS (RAM_D2_OFFSET + 0x19AB) // 128 bytes
+#define RAM_BUTTON_KEY_DATA_ADDRESS (RAM_D2_OFFSET + 0x1A2B)
+#define RAM_BUTTON_KEY_OFF_DATA_ADDRESS (RAM_D2_OFFSET + 0x1A2B) // 1287 bytes
+#define RAM_BUTTON_KEY_ON_DATA_ADDRESS (RAM_D2_OFFSET + 0x1F32)  // 1287 bytes
 
-#define RAM_BUTTON_OSC_A_ADDRESS 0x30002439         // 208px * 39 px
-#define RAM_BUTTON_OSC_A_PALETTE_ADDRESS 0x30002439 // 128 bytes
-#define RAM_BUTTON_OSC_A_DATA_ADDRESS 0x300024B9
-#define RAM_BUTTON_OSC_A_0_DATA_ADDRESS 0x300024B9 // 2704 bytes
-#define RAM_BUTTON_OSC_A_1_DATA_ADDRESS 0x30002F49 // 2704 bytes
-#define RAM_BUTTON_OSC_A_2_DATA_ADDRESS 0x300039D9 // 2704 bytes
+#define RAM_BUTTON_OSC_A_ADDRESS (RAM_D2_OFFSET + 0x2439)         // 208px * 39 px
+#define RAM_BUTTON_OSC_A_PALETTE_ADDRESS (RAM_D2_OFFSET + 0x2439) // 128 bytes
+#define RAM_BUTTON_OSC_A_DATA_ADDRESS (RAM_D2_OFFSET + 0x24B9)
+#define RAM_BUTTON_OSC_A_0_DATA_ADDRESS (RAM_D2_OFFSET + 0x24B9) // 2704 bytes
+#define RAM_BUTTON_OSC_A_1_DATA_ADDRESS (RAM_D2_OFFSET + 0x2F49) // 2704 bytes
+#define RAM_BUTTON_OSC_A_2_DATA_ADDRESS (RAM_D2_OFFSET + 0x39D9) // 2704 bytes
 
-#define RAM_BUTTON_OSC_B_ADDRESS 0x30004469         // 208px * 39 px
-#define RAM_BUTTON_OSC_B_PALETTE_ADDRESS 0x30004469 // 128 bytes
-#define RAM_BUTTON_OSC_B_DATA_ADDRESS 0x300044E9
-#define RAM_BUTTON_OSC_B_0_DATA_ADDRESS 0x300044E9 // 2704 bytes
-#define RAM_BUTTON_OSC_B_1_DATA_ADDRESS 0x30004F79 // 2704 bytes
-#define RAM_BUTTON_OSC_B_2_DATA_ADDRESS 0x30005A09 // 2704 bytes
+#define RAM_BUTTON_OSC_B_ADDRESS (RAM_D2_OFFSET + 0x4469)         // 208px * 39 px
+#define RAM_BUTTON_OSC_B_PALETTE_ADDRESS (RAM_D2_OFFSET + 0x4469) // 128 bytes
+#define RAM_BUTTON_OSC_B_DATA_ADDRESS (RAM_D2_OFFSET + 0x44E9)
+#define RAM_BUTTON_OSC_B_0_DATA_ADDRESS (RAM_D2_OFFSET + 0x44E9) // 2704 bytes
+#define RAM_BUTTON_OSC_B_1_DATA_ADDRESS (RAM_D2_OFFSET + 0x4F79) // 2704 bytes
+#define RAM_BUTTON_OSC_B_2_DATA_ADDRESS (RAM_D2_OFFSET + 0x5A09) // 2704 bytes
 
-#define RAM_BUTTON_FILTER_ADDRESS 0x30006499         // 99px * 26 px
-#define RAM_BUTTON_FILTER_PALETTE_ADDRESS 0x30006499 // 128
-#define RAM_BUTTON_FILTER_DATA_ADDRESS 0x30006519
-#define RAM_BUTTON_FILTER_OFF_DATA_ADDRESS 0x30006519 // 1287 bytes
-#define RAM_BUTTON_FILTER_ON_DATA_ADDRESS 0x30006A20  // 1287 bytes
+#define RAM_BUTTON_FILTER_ADDRESS (RAM_D2_OFFSET + 0x6499)         // 99px * 26 px
+#define RAM_BUTTON_FILTER_PALETTE_ADDRESS (RAM_D2_OFFSET + 0x6499) // 128
+#define RAM_BUTTON_FILTER_DATA_ADDRESS (RAM_D2_OFFSET + 0x6519)
+#define RAM_BUTTON_FILTER_OFF_DATA_ADDRESS (RAM_D2_OFFSET + 0x6519) // 1287 bytes
+#define RAM_BUTTON_FILTER_ON_DATA_ADDRESS (RAM_D2_OFFSET + 0x6A20)  // 1287 bytes
 
-#define RAM_BUTTON_ENVELOPE_ADDRESS 0x30006F27         // 99px * 26 px
-#define RAM_BUTTON_ENVELOPE_PALETTE_ADDRESS 0x30006F27 // 128 bytes
-#define RAM_BUTTON_ENVELOPE_DATA_ADDRESS 0x30006FA7
-#define RAM_BUTTON_ENVELOPE_OFF_DATA_ADDRESS 0x30006FA7 // 1287 bytes
-#define RAM_BUTTON_ENVELOPE_ON_DATA_ADDRESS 0x300074AE  // 1287 bytes
+#define RAM_BUTTON_ENVELOPE_ADDRESS (RAM_D2_OFFSET + 0x6F27)         // 99px * 26 px
+#define RAM_BUTTON_ENVELOPE_PALETTE_ADDRESS (RAM_D2_OFFSET + 0x6F27) // 128 bytes
+#define RAM_BUTTON_ENVELOPE_DATA_ADDRESS (RAM_D2_OFFSET + 0x6FA7)
+#define RAM_BUTTON_ENVELOPE_OFF_DATA_ADDRESS (RAM_D2_OFFSET + 0x6FA7) // 1287 bytes
+#define RAM_BUTTON_ENVELOPE_ON_DATA_ADDRESS (RAM_D2_OFFSET + 0x74AE)  // 1287 bytes
 
 // 0x300079B5 - 0x30008000  free space
 
 /* RAM_D3 0x38000000 16KB ----------------------------------------------------*/
+// #define RAM_D3_OFFSET 0x38000000
+extern uint8_t emu_ram_d3[16 * 1024];
+#define RAM_D3_OFFSET (&emu_ram_d3[0])
 
-#define RAM_BUTTON_OSC_A_LFO_ADDRESS 0x38000000         // 99px * 26 px
-#define RAM_BUTTON_OSC_A_LFO_PALETTE_ADDRESS 0x38000000 // 128 bytes
-#define RAM_BUTTON_OSC_A_LFO_DATA_ADDRESS 0x38000080
-#define RAM_BUTTON_OSC_A_LFO_OFF_DATA_ADDRESS 0x38000080 // 1287 bytes
-#define RAM_BUTTON_OSC_A_LFO_ON_DATA_ADDRESS 0x38000587  // 1287 bytes
+#define RAM_BUTTON_OSC_A_LFO_ADDRESS (RAM_D3_OFFSET + 0x0000)         // 99px * 26 px
+#define RAM_BUTTON_OSC_A_LFO_PALETTE_ADDRESS (RAM_D3_OFFSET + 0x0000) // 128 bytes
+#define RAM_BUTTON_OSC_A_LFO_DATA_ADDRESS (RAM_D3_OFFSET + 0x0080)
+#define RAM_BUTTON_OSC_A_LFO_OFF_DATA_ADDRESS (RAM_D3_OFFSET + 0x0080) // 1287 bytes
+#define RAM_BUTTON_OSC_A_LFO_ON_DATA_ADDRESS (RAM_D3_OFFSET + 0x0587)  // 1287 bytes
 
-#define RAM_BUTTON_OSC_B_LFO_ADDRESS 0x38000A8E         // 99px * 26 px
-#define RAM_BUTTON_OSC_B_LFO_PALETTE_ADDRESS 0x38000A8E // 128 bytes
-#define RAM_BUTTON_OSC_B_LFO_DATA_ADDRESS 0x38000B0E
-#define RAM_BUTTON_OSC_B_LFO_OFF_DATA_ADDRESS 0x38000B0E // 1287 bytes
-#define RAM_BUTTON_OSC_B_LFO_ON_DATA_ADDRESS 0x38001015  // 1287 bytes
+#define RAM_BUTTON_OSC_B_LFO_ADDRESS (RAM_D3_OFFSET + 0x0A8E)         // 99px * 26 px
+#define RAM_BUTTON_OSC_B_LFO_PALETTE_ADDRESS (RAM_D3_OFFSET + 0x0A8E) // 128 bytes
+#define RAM_BUTTON_OSC_B_LFO_DATA_ADDRESS (RAM_D3_OFFSET + 0x0B0E)
+#define RAM_BUTTON_OSC_B_LFO_OFF_DATA_ADDRESS (RAM_D3_OFFSET + 0x0B0E) // 1287 bytes
+#define RAM_BUTTON_OSC_B_LFO_ON_DATA_ADDRESS (RAM_D3_OFFSET + 0x1015)  // 1287 bytes
 
-#define RAM_BUTTON_SONG_ADDRESS 0x3800151C         // 99px * 26 px
-#define RAM_BUTTON_SONG_PALETTE_ADDRESS 0x3800151C // 128 bytes
-#define RAM_BUTTON_SONG_DATA_ADDRESS 0x3800159C
-#define RAM_BUTTON_SONG_OFF_DATA_ADDRESS 0x3800159C // 1287 bytes
-#define RAM_BUTTON_SONG_ON_DATA_ADDRESS 0x38001AA3  // 1287 bytes
+#define RAM_BUTTON_SONG_ADDRESS (RAM_D3_OFFSET + 0x151C)         // 99px * 26 px
+#define RAM_BUTTON_SONG_PALETTE_ADDRESS (RAM_D3_OFFSET + 0x151C) // 128 bytes
+#define RAM_BUTTON_SONG_DATA_ADDRESS (RAM_D3_OFFSET + 0x159C)
+#define RAM_BUTTON_SONG_OFF_DATA_ADDRESS (RAM_D3_OFFSET + 0x159C) // 1287 bytes
+#define RAM_BUTTON_SONG_ON_DATA_ADDRESS (RAM_D3_OFFSET + 0x1AA3)  // 1287 bytes
 
 // 0x38001FAA - 0x38004000  free space
 
 /* SDRAM 0xC00000000 128MB ---------------------------------------------------*/
+// #define SDRAM_OFFSET 0xC0000000
+extern uint8_t emu_sdram[128 * 1024 * 1024];
+#define SDRAM_OFFSET (&emu_sdram[0])
 
-#define RAM_WAVETABLE_ADDRESS 0xC0000000
+#define RAM_WAVETABLE_ADDRESS (SDRAM_OFFSET + 0x00000000)
 
 const uint32_t kWavetableSize = 2048 * 256;
 const uint32_t kWavetableByteSize = kWavetableSize * 2;
@@ -169,11 +188,7 @@ const uint32_t kWavetableByteSize = kWavetableSize * 2;
 #define RAM_WAVETABLE_1A RAM_WAVETABLE_ADDRESS + (2 * kWavetableByteSize)
 #define RAM_WAVETABLE_1B RAM_WAVETABLE_ADDRESS + (3 * kWavetableByteSize)
 
-const uint32_t kRamWavetableAddressLibrary[2][2] = {
-    {RAM_WAVETABLE_0A, RAM_WAVETABLE_0B},
-    {RAM_WAVETABLE_1A, RAM_WAVETABLE_1B}};
-
-#define RAM_DELAY_ADDRESS 0xC0400000
+#define RAM_DELAY_ADDRESS (SDRAM_OFFSET + 0x00400000)
 
 const uint32_t kDelaySize = 96000;
 const uint32_t kDelayByteSize = kDelaySize * 4;
@@ -181,7 +196,7 @@ const uint32_t kDelayByteSize = kDelaySize * 4;
 #define RAM_DELAY_0 RAM_DELAY_ADDRESS
 #define RAM_DELAY_1 RAM_DELAY_ADDRESS + (1 * kDelayByteSize)
 
-#define RAM_CHORUS_ADDRESS 0xC04BB800
+#define RAM_CHORUS_ADDRESS (SDRAM_OFFSET + 0x004BB800)
 
 const uint32_t kChorusSize = 24000;
 const uint32_t kChorusByteSize = kChorusSize * 4;
@@ -189,7 +204,7 @@ const uint32_t kChorusByteSize = kChorusSize * 4;
 #define RAM_CHORUS_0 RAM_CHORUS_ADDRESS
 #define RAM_CHORUS_1 RAM_CHORUS_ADDRESS + (1 * kChorusByteSize)
 
-#define RAM_METRO_ADDRESS 0xC04EA600
+#define RAM_METRO_ADDRESS (SDRAM_OFFSET + 0x004EA600)
 
 const uint32_t kMetroSize = 9600; // 0.2 seconds
 const uint32_t kMetroByteSize = kMetroSize * 3;
@@ -205,67 +220,59 @@ const uint32_t kMetroByteSize = kMetroSize * 3;
 #define RAM_METRO_4A RAM_METRO_ADDRESS + (8 * kMetroByteSize)
 #define RAM_METRO_4B RAM_METRO_ADDRESS + (9 * kMetroByteSize)
 
-const uint32_t kRamMetronomeAddressLibrary[5][2] = {
-    {RAM_METRO_0A, RAM_METRO_0B},
-    {RAM_METRO_1A, RAM_METRO_1B},
-    {RAM_METRO_2A, RAM_METRO_2B},
-    {RAM_METRO_3A, RAM_METRO_3B},
-    {RAM_METRO_4A, RAM_METRO_4B},
-};
-
 // 0xC0530B00 - 0xC0700000  free space
 
-#define RAM_IMAGE_LOGO_ADDRESS 0xC0700000            // 600px * 100px
-#define RAM_IMAGE_LOGO_PALETTE_ADDRESS 0xC0700000    //    128 bytes
-#define RAM_IMAGE_LOGO_DATA_ADDRESS 0xC0700000 + 128 // 60.000 bytes
+#define RAM_IMAGE_LOGO_ADDRESS (SDRAM_OFFSET + 0x00700000)            // 600px * 100px
+#define RAM_IMAGE_LOGO_PALETTE_ADDRESS (SDRAM_OFFSET + 0x00700000)    //    128 bytes
+#define RAM_IMAGE_LOGO_DATA_ADDRESS (SDRAM_OFFSET + 0x00700000) + 128 // 60.000 bytes
 
-#define RAM_IMAGE_MENU_ADDRESS 0xC070EAE0            // 814px * 160px
-#define RAM_IMAGE_MENU_PALETTE_ADDRESS 0xC070EAE0    //    128 bytes
-#define RAM_IMAGE_MENU_DATA_ADDRESS 0xC070EAE0 + 128 // 65.120 bytes
+#define RAM_IMAGE_MENU_ADDRESS (SDRAM_OFFSET + 0x0070EAE0)            // 814px * 160px
+#define RAM_IMAGE_MENU_PALETTE_ADDRESS (SDRAM_OFFSET + 0x0070EAE0)    //    128 bytes
+#define RAM_IMAGE_MENU_DATA_ADDRESS (SDRAM_OFFSET + 0x0070EAE0) + 128 // 65.120 bytes
 
-#define RAM_IMAGE_KEY_ADDRESS 0xC072E8A0            // 119px * 244px
-#define RAM_IMAGE_KEY_PALETTE_ADDRESS 0xC072E8A0    // 128 bytes
-#define RAM_IMAGE_KEY_DATA_ADDRESS 0xC072E8A0 + 128 // 29.036 bytes
+#define RAM_IMAGE_KEY_ADDRESS (SDRAM_OFFSET + 0x0072E8A0)            // 119px * 244px
+#define RAM_IMAGE_KEY_PALETTE_ADDRESS (SDRAM_OFFSET + 0x0072E8A0)    // 128 bytes
+#define RAM_IMAGE_KEY_DATA_ADDRESS (SDRAM_OFFSET + 0x0072E8A0) + 128 // 29.036 bytes
 
-#define RAM_IMAGE_OSC_A_ADDRESS 0xC0735A8C            // 228px * 244px
-#define RAM_IMAGE_OSC_A_PALETTE_ADDRESS 0xC0735A8C    // 128 bytes
-#define RAM_IMAGE_OSC_A_DATA_ADDRESS 0xC0735A8C + 128 // 55.632 bytes
+#define RAM_IMAGE_OSC_A_ADDRESS (SDRAM_OFFSET + 0x00735A8C)            // 228px * 244px
+#define RAM_IMAGE_OSC_A_PALETTE_ADDRESS (SDRAM_OFFSET + 0x00735A8C)    // 128 bytes
+#define RAM_IMAGE_OSC_A_DATA_ADDRESS (SDRAM_OFFSET + 0x00735A8C) + 128 // 55.632 bytes
 
-#define RAM_IMAGE_OSC_B_ADDRESS 0xC074345C            // 228px * 244px
-#define RAM_IMAGE_OSC_B_PALETTE_ADDRESS 0xC074345C    // 128 bytes
-#define RAM_IMAGE_OSC_B_DATA_ADDRESS 0xC074345C + 128 // 55.632 bytes
+#define RAM_IMAGE_OSC_B_ADDRESS (SDRAM_OFFSET + 0x0074345C)            // 228px * 244px
+#define RAM_IMAGE_OSC_B_PALETTE_ADDRESS (SDRAM_OFFSET + 0x0074345C)    // 128 bytes
+#define RAM_IMAGE_OSC_B_DATA_ADDRESS (SDRAM_OFFSET + 0x0074345C) + 128 // 55.632 bytes
 
-#define RAM_IMAGE_FILTER_ADDRESS 0xC0750E2C            // 119px * 244px
-#define RAM_IMAGE_FILTER_PALETTE_ADDRESS 0xC0750E2C    // 128 bytes
-#define RAM_IMAGE_FILTER_DATA_ADDRESS 0xC0750E2C + 128 // 29.036 bytes
+#define RAM_IMAGE_FILTER_ADDRESS (SDRAM_OFFSET + 0x00750E2C)            // 119px * 244px
+#define RAM_IMAGE_FILTER_PALETTE_ADDRESS (SDRAM_OFFSET + 0x00750E2C)    // 128 bytes
+#define RAM_IMAGE_FILTER_DATA_ADDRESS (SDRAM_OFFSET + 0x00750E2C) + 128 // 29.036 bytes
 
-#define RAM_IMAGE_ENV_ADDRESS 0xC0758018            // 119px * 244px
-#define RAM_IMAGE_ENV_PALETTE_ADDRESS 0xC0758018    // 128 bytes
-#define RAM_IMAGE_ENV_DATA_ADDRESS 0xC0758018 + 128 // 29.036 bytes
+#define RAM_IMAGE_ENV_ADDRESS (SDRAM_OFFSET + 0x00758018)            // 119px * 244px
+#define RAM_IMAGE_ENV_PALETTE_ADDRESS (SDRAM_OFFSET + 0x00758018)    // 128 bytes
+#define RAM_IMAGE_ENV_DATA_ADDRESS (SDRAM_OFFSET + 0x00758018) + 128 // 29.036 bytes
 
-#define RAM_GRAPH_KEY_ADDRESS 0xC075F204
-#define RAM_GRAPH_KEY_PALETTE_ADDRESS 0xC075F204    // 128 bytes
-#define RAM_GRAPH_KEY_DATA_ADDRESS 0xC075F204 + 128 // 52.234 bytes
+#define RAM_GRAPH_KEY_ADDRESS (SDRAM_OFFSET + 0x0075F204)
+#define RAM_GRAPH_KEY_PALETTE_ADDRESS (SDRAM_OFFSET + 0x0075F204)    // 128 bytes
+#define RAM_GRAPH_KEY_DATA_ADDRESS (SDRAM_OFFSET + 0x0075F204) + 128 // 52.234 bytes
 
-#define RAM_GRAPH_ARPEG_ADDRESS 0xC076BE8E
-#define RAM_GRAPH_ARPEG_PALETTE_ADDRESS 0xC076BE8E    // 128 bytes
-#define RAM_GRAPH_ARPEG_DATA_ADDRESS 0xC076BE8E + 128 // 104.468 bytes
+#define RAM_GRAPH_ARPEG_ADDRESS (SDRAM_OFFSET + 0x0076BE8E)
+#define RAM_GRAPH_ARPEG_PALETTE_ADDRESS (SDRAM_OFFSET + 0x0076BE8E)    // 128 bytes
+#define RAM_GRAPH_ARPEG_DATA_ADDRESS (SDRAM_OFFSET + 0x0076BE8E) + 128 // 104.468 bytes
 
-#define RAM_GRAPH_ENVELOPE_ADDRESS 0xC0785722
-#define RAM_GRAPH_ENVELOPE_PALETTE_ADDRESS 0xC0785722    // 128 bytes
-#define RAM_GRAPH_ENVELOPE_DATA_ADDRESS 0xC0785722 + 128 // 16.072 bytes
+#define RAM_GRAPH_ENVELOPE_ADDRESS (SDRAM_OFFSET + 0x00785722)
+#define RAM_GRAPH_ENVELOPE_PALETTE_ADDRESS (SDRAM_OFFSET + 0x00785722)    // 128 bytes
+#define RAM_GRAPH_ENVELOPE_DATA_ADDRESS (SDRAM_OFFSET + 0x00785722) + 128 // 16.072 bytes
 
-#define RAM_GRAPH_FILTER_ADDRESS 0xC0789AA6
-#define RAM_GRAPH_FILTER_PALETTE_ADDRESS 0xC0789AA6    // 128 bytes
-#define RAM_GRAPH_FILTER_DATA_ADDRESS 0xC0789AA6 + 128 // 20.090 bytes
+#define RAM_GRAPH_FILTER_ADDRESS (SDRAM_OFFSET + 0x00789AA6)
+#define RAM_GRAPH_FILTER_PALETTE_ADDRESS (SDRAM_OFFSET + 0x00789AA6)    // 128 bytes
+#define RAM_GRAPH_FILTER_DATA_ADDRESS (SDRAM_OFFSET + 0x00789AA6) + 128 // 20.090 bytes
 
-#define RAM_GRAPH_LFO_A_ADDRESS 0xC078E9A0
-#define RAM_GRAPH_LFO_A_PALETTE_ADDRESS 0xC078E9A0    // 128 bytes
-#define RAM_GRAPH_LFO_A_DATA_ADDRESS 0xC078E9A0 + 128 // 104.468 bytes
+#define RAM_GRAPH_LFO_A_ADDRESS (SDRAM_OFFSET + 0x0078E9A0)
+#define RAM_GRAPH_LFO_A_PALETTE_ADDRESS (SDRAM_OFFSET + 0x0078E9A0)    // 128 bytes
+#define RAM_GRAPH_LFO_A_DATA_ADDRESS (SDRAM_OFFSET + 0x0078E9A0) + 128 // 104.468 bytes
 
-#define RAM_GRAPH_LFO_B_ADDRESS 0xC07A8234
-#define RAM_GRAPH_LFO_B_PALETTE_ADDRESS 0xC07A8234    // 128 bytes
-#define RAM_GRAPH_LFO_B_DATA_ADDRESS 0xC07A8234 + 128 // 104.468 bytes
+#define RAM_GRAPH_LFO_B_ADDRESS (SDRAM_OFFSET + 0x007A8234)
+#define RAM_GRAPH_LFO_B_PALETTE_ADDRESS (SDRAM_OFFSET + 0x007A8234)    // 128 bytes
+#define RAM_GRAPH_LFO_B_DATA_ADDRESS (SDRAM_OFFSET + 0x007A8234) + 128 // 104.468 bytes
 
 // 0xC07C1AC8 - 0xC0800000  free space
 
@@ -273,24 +280,8 @@ const uint32_t kRamMetronomeAddressLibrary[5][2] = {
 /* Sdram Constants -----------------------------------------------------------*/
 ////////////////////////////////////////////////////////////////////////////////
 
-#define SDRAM_START_ADDRESS ((uint32_t)0xC0000000)
-#define SDRAM_END_ADDRESS ((uint32_t)0xC0FFFFF0)
-
-#define SDRAM_MEMORY_WIDTH FMC_SDRAM_MEM_BUS_WIDTH_16
-#define SDCLOCK_PERIOD FMC_SDRAM_CLOCK_PERIOD_2
-
-#define SDRAM_TIMEOUT ((uint32_t)0xFFFF)
-#define SDRAM_MODEREG_BURST_LENGTH_1 ((uint16_t)0x0000)
-#define SDRAM_MODEREG_BURST_LENGTH_2 ((uint16_t)0x0001)
-#define SDRAM_MODEREG_BURST_LENGTH_4 ((uint16_t)0x0002)
-#define SDRAM_MODEREG_BURST_LENGTH_8 ((uint16_t)0x0004)
-#define SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL ((uint16_t)0x0000)
-#define SDRAM_MODEREG_BURST_TYPE_INTERLEAVED ((uint16_t)0x0008)
-#define SDRAM_MODEREG_CAS_LATENCY_2 ((uint16_t)0x0020)
-#define SDRAM_MODEREG_CAS_LATENCY_3 ((uint16_t)0x0030)
-#define SDRAM_MODEREG_OPERATING_MODE_STANDARD ((uint16_t)0x0000)
-#define SDRAM_MODEREG_WRITEBURST_MODE_PROGRAMMED ((uint16_t)0x0000)
-#define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE ((uint16_t)0x0200)
+// #define SDRAM_START_ADDRESS ((uint32_t)0xC0000000)
+// #define SDRAM_END_ADDRESS ((uint32_t)0xC0FFFFF0)
 
 ////////////////////////////////////////////////////////////////////////////////
 /* Sd Constants --------------------------------------------------------------*/
@@ -358,20 +349,20 @@ const char kSdAlertTextAnalyze[] = "ANALYZING SDCARD";
 /* Lcd Constants -------------------------------------------------------------*/
 ////////////////////////////////////////////////////////////////////////////////
 
-#define LCD_DATA_GPIO_Port GPIOB
+// #define LCD_DATA_GPIO_Port GPIOB
 
-#define LCD_CS_HIGH LCD_CS_GPIO_Port->BSRR = LCD_CS_Pin
-#define LCD_CS_LOW LCD_CS_GPIO_Port->BSRR = LCD_CS_Pin << 16U
-#define LCD_RS_HIGH LCD_RS_GPIO_Port->BSRR = LCD_RS_Pin
-#define LCD_RS_LOW LCD_RS_GPIO_Port->BSRR = LCD_RS_Pin << 16U
-#define LCD_WR_HIGH LCD_WR_GPIO_Port->BSRR = LCD_WR_Pin
-#define LCD_WR_LOW LCD_WR_GPIO_Port->BSRR = LCD_WR_Pin << 16U
-#define LCD_RD_HIGH LCD_RD_GPIO_Port->BSRR = LCD_RD_Pin
-#define LCD_RD_LOW LCD_RD_GPIO_Port->BSRR = LCD_RD_Pin << 16U
-#define LCD_RESET_HIGH LCD_RESET_GPIO_Port->BSRR = LCD_RESET_Pin
-#define LCD_RESET_LOW LCD_RESET_GPIO_Port->BSRR = LCD_RESET_Pin << 16U
-#define LCD_BL_HIGH LCD_BL_GPIO_Port->BSRR = LCD_BL_Pin
-#define LCD_BL_LOW LCD_BL_GPIO_Port->BSRR = LCD_BL_Pin << 16U
+// #define LCD_CS_HIGH LCD_CS_GPIO_Port->BSRR = LCD_CS_Pin
+// #define LCD_CS_LOW LCD_CS_GPIO_Port->BSRR = LCD_CS_Pin << 16U
+// #define LCD_RS_HIGH LCD_RS_GPIO_Port->BSRR = LCD_RS_Pin
+// #define LCD_RS_LOW LCD_RS_GPIO_Port->BSRR = LCD_RS_Pin << 16U
+// #define LCD_WR_HIGH LCD_WR_GPIO_Port->BSRR = LCD_WR_Pin
+// #define LCD_WR_LOW LCD_WR_GPIO_Port->BSRR = LCD_WR_Pin << 16U
+// #define LCD_RD_HIGH LCD_RD_GPIO_Port->BSRR = LCD_RD_Pin
+// #define LCD_RD_LOW LCD_RD_GPIO_Port->BSRR = LCD_RD_Pin << 16U
+// #define LCD_RESET_HIGH LCD_RESET_GPIO_Port->BSRR = LCD_RESET_Pin
+// #define LCD_RESET_LOW LCD_RESET_GPIO_Port->BSRR = LCD_RESET_Pin << 16U
+// #define LCD_BL_HIGH LCD_BL_GPIO_Port->BSRR = LCD_BL_Pin
+// #define LCD_BL_LOW LCD_BL_GPIO_Port->BSRR = LCD_BL_Pin << 16U
 
 /*----------------------------------------------------------------------------*/
 
@@ -872,16 +863,16 @@ struct Keyboard {
 const uint8_t kLongButtonCountLow = 5;
 const uint8_t kLongButtonCountHigh = 10;
 
-#define CT0_SCL_HIGH CT0_SCL_GPIO_Port->BSRR = CT0_SCL_Pin
-#define CT0_SCL_LOW CT0_SCL_GPIO_Port->BSRR = CT0_SCL_Pin << 16U
-#define CT1_SCL_HIGH CT1_SCL_GPIO_Port->BSRR = CT1_SCL_Pin
-#define CT1_SCL_LOW CT1_SCL_GPIO_Port->BSRR = CT1_SCL_Pin << 16U
-#define CT2_SCL_HIGH CT2_SCL_GPIO_Port->BSRR = CT2_SCL_Pin
-#define CT2_SCL_LOW CT2_SCL_GPIO_Port->BSRR = CT2_SCL_Pin << 16U
+// #define CT0_SCL_HIGH CT0_SCL_GPIO_Port->BSRR = CT0_SCL_Pin
+// #define CT0_SCL_LOW CT0_SCL_GPIO_Port->BSRR = CT0_SCL_Pin << 16U
+// #define CT1_SCL_HIGH CT1_SCL_GPIO_Port->BSRR = CT1_SCL_Pin
+// #define CT1_SCL_LOW CT1_SCL_GPIO_Port->BSRR = CT1_SCL_Pin << 16U
+// #define CT2_SCL_HIGH CT2_SCL_GPIO_Port->BSRR = CT2_SCL_Pin
+// #define CT2_SCL_LOW CT2_SCL_GPIO_Port->BSRR = CT2_SCL_Pin << 16U
 
-#define CT0_SDO_READ CT0_SDO_GPIO_Port->IDR &CT0_SDO_Pin
-#define CT1_SDO_READ CT1_SDO_GPIO_Port->IDR &CT1_SDO_Pin
-#define CT2_SDO_READ CT2_SDO_GPIO_Port->IDR &CT2_SDO_Pin
+// #define CT0_SDO_READ CT0_SDO_GPIO_Port->IDR &CT0_SDO_Pin
+// #define CT1_SDO_READ CT1_SDO_GPIO_Port->IDR &CT1_SDO_Pin
+// #define CT2_SDO_READ CT2_SDO_GPIO_Port->IDR &CT2_SDO_Pin
 
 /*----------------------------------------------------------------------------*/
 
@@ -1483,7 +1474,7 @@ const float kInitialLpfWet = 0.25;
 
 struct Lpf {
     bool active = kInitialLpfActive;
-    uint8_t freq = kInitialLpfFreq;
+    uint16_t freq = kInitialLpfFreq;
 
     float dry = kInitialLpfDry;
     float wet = kInitialLpfWet;
@@ -1504,7 +1495,7 @@ struct Lpf {
     void calculateFilterCoef() {
         float Q = 0.707;
         float norm;
-        float K = tan(M_PI * freq / kAudioSampleRate);
+        float K = tanf((float)M_PI * freq / kAudioSampleRate);
 
         norm = 1.0f / (1.0f + K / Q + K * K);
         a0 = K * K * norm;
@@ -1736,36 +1727,36 @@ struct Eq {
         case EQ_LOWSHELF:
             if (gain >= 0) { // boost
                 norm = 1 / (1 + SQ * K + K * K);
-                a0 = (1 + sqrt(2 * V) * K + V * K * K) * norm;
+                a0 = (1 + sqrtf(2 * V) * K + V * K * K) * norm;
                 a1 = 2 * (V * K * K - 1) * norm;
-                a2 = (1 - sqrt(2 * V) * K + V * K * K) * norm;
+                a2 = (1 - sqrtf(2 * V) * K + V * K * K) * norm;
                 b1 = 2 * (K * K - 1) * norm;
                 b2 = (1 - SQ * K + K * K) * norm;
             } else { // cut
-                norm = 1 / (1 + sqrt(2 * V) * K + V * K * K);
+                norm = 1 / (1 + sqrtf(2 * V) * K + V * K * K);
                 a0 = (1 + SQ * K + K * K) * norm;
                 a1 = 2 * (K * K - 1) * norm;
                 a2 = (1 - SQ * K + K * K) * norm;
                 b1 = 2 * (V * K * K - 1) * norm;
-                b2 = (1 - sqrt(2 * V) * K + V * K * K) * norm;
+                b2 = (1 - sqrtf(2 * V) * K + V * K * K) * norm;
             }
             break;
 
         case EQ_HIGHSHELF:
             if (gain >= 0) { // boost
                 norm = 1 / (1 + SQ * K + K * K);
-                a0 = (V + sqrt(2 * V) * K + K * K) * norm;
+                a0 = (V + sqrtf(2 * V) * K + K * K) * norm;
                 a1 = 2 * (K * K - V) * norm;
-                a2 = (V - sqrt(2 * V) * K + K * K) * norm;
+                a2 = (V - sqrtf(2 * V) * K + K * K) * norm;
                 b1 = 2 * (K * K - 1) * norm;
                 b2 = (1 - SQ * K + K * K) * norm;
             } else { // cut
-                norm = 1 / (V + sqrt(2 * V) * K + K * K);
+                norm = 1 / (V + sqrtf(2 * V) * K + K * K);
                 a0 = (1 + SQ * K + K * K) * norm;
                 a1 = 2 * (K * K - 1) * norm;
                 a2 = (1 - SQ * K + K * K) * norm;
                 b1 = 2 * (K * K - V) * norm;
-                b2 = (V - sqrt(2 * V) * K + K * K) * norm;
+                b2 = (V - sqrtf(2 * V) * K + K * K) * norm;
             }
             break;
 
@@ -2404,7 +2395,7 @@ struct Filter {
         float Q = kFilterResDataLibrary[res].data;
         float norm;
 
-        float K = tan(M_PI * frequency / sampleRate);
+        float K = tanf((float)M_PI * frequency / sampleRate);
 
         switch (type) {
         case FIL_OFF:
@@ -2562,7 +2553,7 @@ struct Envelope {
 /* Effect-Delay Constants ----------------------------------------------------*/
 ////////////////////////////////////////////////////////////////////////////////
 
-const uint16_t kDelayBufferSize = 96000;
+const uint32_t kDelayBufferSize = 96000;
 
 const uint8_t kMinDelayTime = 0;
 const uint8_t kMaxDelayTime = 5;
@@ -3034,8 +3025,8 @@ struct Phaser {
         endFreq = kPhaserFreqDataLibrary[kInitialPhaserEndFreq].data;
         rate = kPhaserRateDataLibrary[kInitialPhaserRate].data;
 
-        centerFreq = startFreq + ((endFreq - startFreq) / 2.0);
-        depthFreq = (endFreq - centerFreq) * 0.9;
+        centerFreq = startFreq + ((endFreq - startFreq) / 2.0f);
+        depthFreq = (endFreq - centerFreq) * 0.9f;
         lfo = 0;
         dataX = 0;
         dataY = 0;
@@ -3043,8 +3034,8 @@ struct Phaser {
     }
 
     void update() {
-        centerFreq = startFreq + ((endFreq - startFreq) / 2.0);
-        depthFreq = (endFreq - centerFreq) * 0.9;
+        centerFreq = startFreq + ((endFreq - startFreq) / 2.0f);
+        depthFreq = (endFreq - centerFreq) * 0.9f;
     }
 
     void cleanMemory() {}
@@ -3147,14 +3138,14 @@ struct Compressor {
         attackTime = kCompressorAttackTimeDataLibrary[kInitialCompressorAttackTime].data;
         releaseTime = kCompressorReleaseTimeDataLibrary[kInitialCompressorReleaseTime].data;
 
-        attackAlpha = exp(-log(9) / (kAudioSampleRate * attackTime));
-        releaseAlpha = exp(-log(9) / (kAudioSampleRate * releaseTime));
+        attackAlpha = exp(-logf(9) / (kAudioSampleRate * attackTime));
+        releaseAlpha = exp(-logf(9) / (kAudioSampleRate * releaseTime));
         gainSmoothPrev = 0;
     }
 
     void update() {
-        attackAlpha = exp(-log(9) / (kAudioSampleRate * attackTime));
-        releaseAlpha = exp(-log(9) / (kAudioSampleRate * releaseTime));
+        attackAlpha = expf(-logf(9) / (kAudioSampleRate * attackTime));
+        releaseAlpha = expf(-logf(9) / (kAudioSampleRate * releaseTime));
     }
 
     void cleanMemory() {}
@@ -3257,14 +3248,14 @@ struct Expander {
         attackTime = kExpanderAttackTimeDataLibrary[kInitialExpanderAttackTime].data;
         releaseTime = kExpanderReleaseTimeDataLibrary[kInitialExpanderReleaseTime].data;
 
-        attackAlpha = exp(-log(9) / (kAudioSampleRate * attackTime));
-        releaseAlpha = exp(-log(9) / (kAudioSampleRate * releaseTime));
+        attackAlpha = expf(-logf(9) / (kAudioSampleRate * attackTime));
+        releaseAlpha = expf(-logf(9) / (kAudioSampleRate * releaseTime));
         gainSmoothPrev = -144;
     }
 
     void update() {
-        attackAlpha = exp(-log(9) / (kAudioSampleRate * attackTime));
-        releaseAlpha = exp(-log(9) / (kAudioSampleRate * releaseTime));
+        attackAlpha = expf(-logf(9) / (kAudioSampleRate * attackTime));
+        releaseAlpha = expf(-logf(9) / (kAudioSampleRate * releaseTime));
     }
 
     void cleanMemory() {}
@@ -3366,15 +3357,15 @@ struct Overdrive {
         thresholddB = kOverdriveThresholdDataLibrary[kInitialOverdriveThreshold].data;
         tone = kOverdriveToneDataLibrary[kInitialOverdriveTone].data;
 
-        gain = pow(10.0f, gaindB / 20.0f);
-        threshold = pow(10.0f, thresholddB / 20.0f);
+        gain = powf(10.0f, gaindB / 20.0f);
+        threshold = powf(10.0f, thresholddB / 20.0f);
 
         calculateFilterCoef();
     }
 
     void update() {
-        gain = pow(10.0f, gaindB / 20.0f);
-        threshold = pow(10.0f, thresholddB / 20.0f);
+        gain = powf(10.0f, gaindB / 20.0f);
+        threshold = powf(10.0f, thresholddB / 20.0f);
 
         calculateFilterCoef();
     }
@@ -3382,7 +3373,7 @@ struct Overdrive {
     void calculateFilterCoef() {
         float Q = 0.707;
         float norm;
-        float K = tan(M_PI * tone / kAudioSampleRate);
+        float K = tanf((float)M_PI * tone / kAudioSampleRate);
 
         norm = 1.0f / (1.0f + K / Q + K * K);
         a0 = K * K * norm;
@@ -3498,15 +3489,15 @@ struct Distortion {
         thresholddB = kDistortionThresholdDataLibrary[kInitialDistortionThreshold].data;
         tone = kDistortionToneDataLibrary[kInitialDistortionTone].data;
 
-        gain = pow(10.0f, gaindB / 20.0f);
-        threshold = pow(10.0f, thresholddB / 20.0f);
+        gain = powf(10.0f, gaindB / 20.0f);
+        threshold = powf(10.0f, thresholddB / 20.0f);
 
         calculateFilterCoef();
     }
 
     void update() {
-        gain = pow(10.0f, gaindB / 20.0f);
-        threshold = pow(10.0f, thresholddB / 20.0f);
+        gain = powf(10.0f, gaindB / 20.0f);
+        threshold = powf(10.0f, thresholddB / 20.0f);
 
         calculateFilterCoef();
     }
@@ -3514,7 +3505,7 @@ struct Distortion {
     void calculateFilterCoef() {
         float Q = 0.707;
         float norm;
-        float K = tan(M_PI * tone / kAudioSampleRate);
+        float K = tanf((float)M_PI * tone / kAudioSampleRate);
 
         norm = 1.0f / (1.0f + K / Q + K * K);
         a0 = K * K * norm;
@@ -3650,7 +3641,7 @@ struct Bitcrusher {
 
         resModifier += 0xFF000000;
 
-        limitMultiplier = pow(10.0, threshold / 20.0);
+        limitMultiplier = powf(10.0, threshold / 20.0);
         limitPos = limitMultiplier * INT24_MAX;
         limitNeg = -limitPos;
 
@@ -3673,7 +3664,7 @@ struct Bitcrusher {
 
         resModifier += 0xFF000000;
 
-        limitMultiplier = pow(10.0, threshold / 20.0);
+        limitMultiplier = powf(10.0, threshold / 20.0);
         limitPos = limitMultiplier * INT24_MAX;
         limitNeg = -limitPos;
     }
@@ -3849,8 +3840,8 @@ struct Effect {
     Distortion distortion;
     Bitcrusher bitcrusher;
 
-    uint32_t delayAddress;
-    uint32_t chorusAddress;
+    void* delayAddress;
+    void* chorusAddress;
     int32_t flangerBuffer[kFlangerBufferSize];
 
     void initialize() {
@@ -4490,14 +4481,14 @@ struct Reverb {
 
     void setSize(float size_) {
         if ((size_ <= 1.0f) && (size >= 0.0f)) {
-            combFeedback = (size_ * 0.28) + 0.70;
+            combFeedback = (size_ * 0.28f) + 0.70f;
         }
     }
 
     void setDecay(float decay_) {
         if ((decay_ <= 1.0f) && (decay >= 0.0f)) {
-            combDecay1 = decay_ * 0.40;
-            combDecay2 = 1.0 - combDecay1;
+            combDecay1 = decay_ * 0.40f;
+            combDecay2 = 1.0f - combDecay1;
         }
     }
 
@@ -4990,7 +4981,7 @@ struct MetroPlayData {
     bool active;
     uint32_t counter;
     uint32_t counterMax;
-    uint32_t ramAddress;
+    void* ramAddress;
     float volumeMultiplier;
 };
 
@@ -5031,7 +5022,7 @@ struct OscLfoPlayData {
 
 struct OscPlayData {
     bool active;
-    uint32_t address;
+    void* address;
     uint16_t phaseShift;
     bool normalize;
     bool xFlip;

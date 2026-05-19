@@ -1,8 +1,6 @@
 #ifndef __LFO_H
 #define __LFO_H
 
-#include "main.h"
-
 const float kLfoDataLibrary[25][2048] = {
 
     // 001 - Tri1

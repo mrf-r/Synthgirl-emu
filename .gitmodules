@@ -1,0 +1,9 @@
+[submodule "02 Software/Synthgirl-App-H723/emu/hwPanelEmulator"]
+	path = 02 Software/Synthgirl-App-H723/emu/hwPanelEmulator
+	url = git@github.com:mrf-r/hwPanelEmulator.git
+[submodule "02 Software/Synthgirl-App-H723/emu/mbwmidi"]
+	path = 02 Software/Synthgirl-App-H723/emu/mbwmidi
+	url = git@github.com:mrf-r/mbwmidi.git
+[submodule "02 Software/Synthgirl-App-H723/emu/minimalgraphics"]
+	path = 02 Software/Synthgirl-App-H723/emu/minimalgraphics
+	url = git@github.com:mrf-r/minimalgraphics.git

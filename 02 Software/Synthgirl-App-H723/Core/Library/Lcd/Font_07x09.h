@@ -1,7 +1,7 @@
 #ifndef __FONT_07x09_H
 #define __FONT_07x09_H
 
-#include "main.h"
+#include <stdint.h>
 
 const uint8_t kFontWidth_07x09 = 7;
 const uint8_t kFontHeight_07x09 = 9;

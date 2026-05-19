@@ -1,7 +1,7 @@
 #ifndef __ICON_H
 #define __ICON_H
 
-#include "main.h"
+#include <stdint.h>
 
 const uint8_t kSdIconIndexSize = 32;
 const uint8_t kSdIconWidth  = 78;

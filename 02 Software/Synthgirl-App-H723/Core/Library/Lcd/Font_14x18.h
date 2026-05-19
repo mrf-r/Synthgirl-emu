@@ -1,7 +1,7 @@
 #ifndef __FONT_14x18_H
 #define __FONT_14x18_H
 
-#include "main.h"
+#include <stdint.h>
 
 const uint8_t kFontWidth_14x18 = 14;
 const uint8_t kFontHeight_14x18 = 18;

@@ -1,4 +1,8 @@
+#include <stdio.h>
+#include <string.h>
 #include "Lcd.h"
+#include "bsp.h"
+#include "mgl.h"
 
 Lcd::Lcd(LcdRotation rotation_, RGB16Color foreColor_, RGB16Color backColor_, LcdFont font_)
     : rotation(rotation_),
@@ -29,81 +33,6 @@ Lcd::Lcd(LcdRotation rotation_, RGB16Color foreColor_, RGB16Color backColor_, Lc
 Lcd::~Lcd() {}
 
 /* Private functions ---------------------------------------------------------*/
-
-void Lcd::setAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
-    writeCommand(LCD_SET_COLUMN_ADDRESS_0);
-    writeData(x0 >> 8);
-    writeCommand(LCD_SET_COLUMN_ADDRESS_1);
-    writeData(x0 & 0xFF);
-    writeCommand(LCD_SET_COLUMN_ADDRESS_2);
-    writeData(x1 >> 8);
-    writeCommand(LCD_SET_COLUMN_ADDRESS_3);
-    writeData(x1 & 0xFF);
-
-    writeCommand(LCD_SET_ROW_ADDRESS_0);
-    writeData(y0 >> 8);
-    writeCommand(LCD_SET_ROW_ADDRESS_1);
-    writeData(y0 & 0xFF);
-    writeCommand(LCD_SET_ROW_ADDRESS_2);
-    writeData(y1 >> 8);
-    writeCommand(LCD_SET_ROW_ADDRESS_3);
-    writeData(y1 & 0xFF);
-
-    writeCommand(LCD_WRITE_MEMORY_START);
-}
-
-void Lcd::clearAddressWindow() {
-    setAddressWindow(0, 0, width - 1, height - 1);
-}
-
-void Lcd::fastFill(RGB16Color color, uint32_t pixel) {
-    LCD_DATA_GPIO_Port->ODR = color;
-
-    uint32_t blocks;
-    blocks = pixel / 16;
-
-    for (uint32_t i = 0; i < blocks; i++) {
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-    }
-
-    if ((pixel % 16) != 0) {
-        for (uint8_t i = 0; i < (pixel % 16) + 1; i++) {
-            LCD_WR_LOW;
-            LCD_WR_HIGH;
-        }
-    }
-}
 
 uint8_t Lcd::getLetter(char letter) {
     switch (letter) {
@@ -324,33 +253,6 @@ RGB16Color Lcd::convertColor(struct RGB24RawColor color_) {
 
 /* Public functions ----------------------------------------------------------*/
 
-void Lcd::setRotation(LcdRotation rotation_) {
-    rotation = rotation_;
-    writeCommand(LCD_SET_ADDRESS_MODE);
-    switch (rotation) {
-        case PORTRAIT_0:
-            writeData(0x00);
-            width = kLCD_WIDTH;
-            height = kLCD_HEIGHT;
-            break;
-        case LANDSCAPE_0:
-            writeData(MADCTL_MV | MADCTL_MX);
-            width = kLCD_HEIGHT;
-            height = kLCD_WIDTH;
-            break;
-        case PORTRAIT_1:
-            writeData(MADCTL_MX | MADCTL_MY);
-            width = kLCD_WIDTH;
-            height = kLCD_HEIGHT;
-            break;
-        case LANDSCAPE_1:
-            writeData(MADCTL_MV | MADCTL_MY);
-            width = kLCD_HEIGHT;
-            height = kLCD_WIDTH;
-            break;
-    }
-}
-
 void Lcd::setFont(LcdFont font_) {
     font = font_;
     switch (font) {
@@ -382,878 +284,6 @@ void Lcd::setFont(LcdFont font_) {
 }
 
 void Lcd::initialize() {
-    LCD_BL_LOW;
-    LCD_RD_HIGH;
-    LCD_WR_HIGH;
-    LCD_CS_LOW;
-
-    HAL_Delay(250);
-    HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, GPIO_PIN_RESET);
-    HAL_Delay(100);
-    HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, GPIO_PIN_SET);
-    HAL_Delay(120);
-
-    writeCommand(0xFF00);
-    writeData(0xAA);
-    writeCommand(0xFF01);
-    writeData(0x55);
-    writeCommand(0xFF02);
-    writeData(0x25);
-    writeCommand(0xFF03);
-    writeData(0x01);
-
-    writeCommand(0xF40F);
-    writeData(0x03);
-    writeCommand(0xF410);
-    writeData(0x21);
-    writeCommand(0xF411);
-    writeData(0x43);
-    writeCommand(0xF412);
-    writeData(0x10);
-    writeCommand(0xF413);
-    writeData(0x34);
-    writeCommand(0xF414);
-    writeData(0x52);
-
-    /// #LV2 Page 1 enable
-    writeCommand(0xF000);
-    writeData(0x55);
-    writeCommand(0xF001);
-    writeData(0xAA);
-    writeCommand(0xF002);
-    writeData(0x52);
-    writeCommand(0xF003);
-    writeData(0x08);
-    writeCommand(0xF004);
-    writeData(0x01);
-
-    /// #AVDD Set AVDD 5.2V
-    writeCommand(0xB000);
-    writeData(0x0D);
-    writeCommand(0xB001);
-    writeData(0x0D);
-    writeCommand(0xB002);
-    writeData(0x0D);
-
-    // #AVDD ratio
-    writeCommand(0xB600);
-    writeData(0x44);
-    writeCommand(0xB601);
-    writeData(0x44);
-    writeCommand(0xB602);
-    writeData(0x44);
-
-    // #AVEE -5.2V
-    writeCommand(0xB100);
-    writeData(0x0D);
-    writeCommand(0xB101);
-    writeData(0x0D);
-    writeCommand(0xB102);
-    writeData(0x0D);
-
-    // #AVEE ratio
-    writeCommand(0xB700);
-    writeData(0x34);
-    writeCommand(0xB701);
-    writeData(0x34);
-    writeCommand(0xB702);
-    writeData(0x34);
-
-    // #VCL  -2.5V
-    writeCommand(0xB200);
-    writeData(0x00);
-    writeCommand(0xB201);
-    writeData(0x00);
-    writeCommand(0xB202);
-    writeData(0x00);
-
-    // #VCL ratio
-    writeCommand(0xB800);
-    writeData(0x34);
-    writeCommand(0xB801);
-    writeData(0x34);
-    writeCommand(0xB802);
-    writeData(0x34);
-
-    // #VGH 15V  (Free pump)
-    writeCommand(0xBF00);
-    writeData(0x01);
-    writeCommand(0xB300);
-    writeData(0x0f);
-    writeCommand(0xB301);
-    writeData(0x0f);
-    writeCommand(0xB302);
-    writeData(0x0f);
-
-    // #VGH ratio
-    writeCommand(0xB900);
-    writeData(0x34);
-    writeCommand(0xB901);
-    writeData(0x34);
-    writeCommand(0xB902);
-    writeData(0x34);
-
-    // #VGL_REG -10V
-    writeCommand(0xB500);
-    writeData(0x08);
-    writeCommand(0xB501);
-    writeData(0x08);
-    writeCommand(0xB502);
-    writeData(0x08);
-
-    writeCommand(0xC200);
-    writeData(0x03);
-
-    // #VGLX ratio
-    writeCommand(0xBA00);
-    writeData(0x24);
-    writeCommand(0xBA01);
-    writeData(0x24);
-    writeCommand(0xBA02);
-    writeData(0x24);
-
-    // #VGMP/VGSP 4.5V/0V
-    writeCommand(0xBC00);
-    writeData(0x00);
-    writeCommand(0xBC01);
-    writeData(0x78);
-    writeCommand(0xBC02);
-    writeData(0x00);
-
-    // #VGMN/VGSN -4.5V/0V
-    writeCommand(0xBD00);
-    writeData(0x00);
-    writeCommand(0xBD01);
-    writeData(0x78);
-    writeCommand(0xBD02);
-    writeData(0x00);
-
-    // #VCOM  -1.575V
-    writeCommand(0xBE00);
-    writeData(0x00);
-    writeCommand(0xBE01);
-    writeData(0x6F);  /// 0x66
-
-    // #Gamma Setting
-    writeCommand(0xD100);
-    writeData(0x00);
-    writeCommand(0xD101);
-    writeData(0x08);
-    writeCommand(0xD102);
-    writeData(0x00);
-    writeCommand(0xD103);
-    writeData(0x09);
-    writeCommand(0xD104);
-    writeData(0x00);
-    writeCommand(0xD105);
-    writeData(0x11);
-    writeCommand(0xD106);
-    writeData(0x00);
-    writeCommand(0xD107);
-    writeData(0x24);
-    writeCommand(0xD108);
-    writeData(0x00);
-    writeCommand(0xD109);
-    writeData(0x3A);
-    writeCommand(0xD10A);
-    writeData(0x00);
-    writeCommand(0xD10B);
-    writeData(0x69);
-    writeCommand(0xD10C);
-    writeData(0x00);
-    writeCommand(0xD10D);
-    writeData(0x95);
-    writeCommand(0xD10E);
-    writeData(0x00);
-    writeCommand(0xD10F);
-    writeData(0xDB);
-    writeCommand(0xD110);
-    writeData(0x01);
-    writeCommand(0xD111);
-    writeData(0x0E);
-    writeCommand(0xD112);
-    writeData(0x01);
-    writeCommand(0xD113);
-    writeData(0x54);
-    writeCommand(0xD114);
-    writeData(0x01);
-    writeCommand(0xD115);
-    writeData(0x85);
-    writeCommand(0xD116);
-    writeData(0x01);
-    writeCommand(0xD117);
-    writeData(0xC8);
-    writeCommand(0xD118);
-    writeData(0x01);
-    writeCommand(0xD119);
-    writeData(0xFC);
-    writeCommand(0xD11A);
-    writeData(0x01);
-    writeCommand(0xD11B);
-    writeData(0xFD);
-    writeCommand(0xD11C);
-    writeData(0x02);
-    writeCommand(0xD11D);
-    writeData(0x29);
-    writeCommand(0xD11E);
-    writeData(0x02);
-    writeCommand(0xD11F);
-    writeData(0x56);
-    writeCommand(0xD120);
-    writeData(0x02);
-    writeCommand(0xD121);
-    writeData(0x6F);
-    writeCommand(0xD122);
-    writeData(0x02);
-    writeCommand(0xD123);
-    writeData(0x8C);
-    writeCommand(0xD124);
-    writeData(0x02);
-    writeCommand(0xD125);
-    writeData(0x9E);
-    writeCommand(0xD126);
-    writeData(0x02);
-    writeCommand(0xD127);
-    writeData(0xB4);
-    writeCommand(0xD128);
-    writeData(0x02);
-    writeCommand(0xD129);
-    writeData(0xC2);
-    writeCommand(0xD12A);
-    writeData(0x02);
-    writeCommand(0xD12B);
-    writeData(0xD6);
-    writeCommand(0xD12C);
-    writeData(0x02);
-    writeCommand(0xD12D);
-    writeData(0xE4);
-    writeCommand(0xD12E);
-    writeData(0x02);
-    writeCommand(0xD12F);
-    writeData(0xF9);
-    writeCommand(0xD130);
-    writeData(0x03);
-    writeCommand(0xD131);
-    writeData(0x25);
-    writeCommand(0xD132);
-    writeData(0x03);
-    writeCommand(0xD133);
-    writeData(0x8E);
-
-    writeCommand(0xD200);
-    writeData(0x00);
-    writeCommand(0xD201);
-    writeData(0x08);
-    writeCommand(0xD202);
-    writeData(0x00);
-    writeCommand(0xD203);
-    writeData(0x09);
-    writeCommand(0xD204);
-    writeData(0x00);
-    writeCommand(0xD205);
-    writeData(0x11);
-    writeCommand(0xD206);
-    writeData(0x00);
-    writeCommand(0xD207);
-    writeData(0x24);
-    writeCommand(0xD208);
-    writeData(0x00);
-    writeCommand(0xD209);
-    writeData(0x3A);
-    writeCommand(0xD20A);
-    writeData(0x00);
-    writeCommand(0xD20B);
-    writeData(0x69);
-    writeCommand(0xD20C);
-    writeData(0x00);
-    writeCommand(0xD20D);
-    writeData(0x95);
-    writeCommand(0xD20E);
-    writeData(0x00);
-    writeCommand(0xD20F);
-    writeData(0xDB);
-    writeCommand(0xD210);
-    writeData(0x01);
-    writeCommand(0xD211);
-    writeData(0x0E);
-    writeCommand(0xD212);
-    writeData(0x01);
-    writeCommand(0xD213);
-    writeData(0x54);
-    writeCommand(0xD214);
-    writeData(0x01);
-    writeCommand(0xD215);
-    writeData(0x85);
-    writeCommand(0xD216);
-    writeData(0x01);
-    writeCommand(0xD217);
-    writeData(0xC8);
-    writeCommand(0xD218);
-    writeData(0x01);
-    writeCommand(0xD219);
-    writeData(0xFC);
-    writeCommand(0xD21A);
-    writeData(0x01);
-    writeCommand(0xD21B);
-    writeData(0xFD);
-    writeCommand(0xD21C);
-    writeData(0x02);
-    writeCommand(0xD21D);
-    writeData(0x29);
-    writeCommand(0xD21E);
-    writeData(0x02);
-    writeCommand(0xD21F);
-    writeData(0x56);
-    writeCommand(0xD220);
-    writeData(0x02);
-    writeCommand(0xD221);
-    writeData(0x6F);
-    writeCommand(0xD222);
-    writeData(0x02);
-    writeCommand(0xD223);
-    writeData(0x8C);
-    writeCommand(0xD224);
-    writeData(0x02);
-    writeCommand(0xD225);
-    writeData(0x9E);
-    writeCommand(0xD226);
-    writeData(0x02);
-    writeCommand(0xD227);
-    writeData(0xB4);
-    writeCommand(0xD228);
-    writeData(0x02);
-    writeCommand(0xD229);
-    writeData(0xC2);
-    writeCommand(0xD22A);
-    writeData(0x02);
-    writeCommand(0xD22B);
-    writeData(0xD6);
-    writeCommand(0xD22C);
-    writeData(0x02);
-    writeCommand(0xD22D);
-    writeData(0xE4);
-    writeCommand(0xD22E);
-    writeData(0x02);
-    writeCommand(0xD22F);
-    writeData(0xF9);
-    writeCommand(0xD230);
-    writeData(0x03);
-    writeCommand(0xD231);
-    writeData(0x25);
-    writeCommand(0xD232);
-    writeData(0x03);
-    writeCommand(0xD233);
-    writeData(0x8E);
-
-    writeCommand(0xD300);
-    writeData(0x00);
-    writeCommand(0xD301);
-    writeData(0x08);
-    writeCommand(0xD302);
-    writeData(0x00);
-    writeCommand(0xD303);
-    writeData(0x09);
-    writeCommand(0xD304);
-    writeData(0x00);
-    writeCommand(0xD305);
-    writeData(0x11);
-    writeCommand(0xD306);
-    writeData(0x00);
-    writeCommand(0xD307);
-    writeData(0x24);
-    writeCommand(0xD308);
-    writeData(0x00);
-    writeCommand(0xD309);
-    writeData(0x3A);
-    writeCommand(0xD30A);
-    writeData(0x00);
-    writeCommand(0xD30B);
-    writeData(0x69);
-    writeCommand(0xD30C);
-    writeData(0x00);
-    writeCommand(0xD30D);
-    writeData(0x95);
-    writeCommand(0xD30E);
-    writeData(0x00);
-    writeCommand(0xD30F);
-    writeData(0xDB);
-    writeCommand(0xD310);
-    writeData(0x01);
-    writeCommand(0xD311);
-    writeData(0x0E);
-    writeCommand(0xD312);
-    writeData(0x01);
-    writeCommand(0xD313);
-    writeData(0x54);
-    writeCommand(0xD314);
-    writeData(0x01);
-    writeCommand(0xD315);
-    writeData(0x85);
-    writeCommand(0xD316);
-    writeData(0x01);
-    writeCommand(0xD317);
-    writeData(0xC8);
-    writeCommand(0xD318);
-    writeData(0x01);
-    writeCommand(0xD319);
-    writeData(0xFC);
-    writeCommand(0xD31A);
-    writeData(0x01);
-    writeCommand(0xD31B);
-    writeData(0xFD);
-    writeCommand(0xD31C);
-    writeData(0x02);
-    writeCommand(0xD31D);
-    writeData(0x29);
-    writeCommand(0xD31E);
-    writeData(0x02);
-    writeCommand(0xD31F);
-    writeData(0x56);
-    writeCommand(0xD320);
-    writeData(0x02);
-    writeCommand(0xD321);
-    writeData(0x6F);
-    writeCommand(0xD322);
-    writeData(0x02);
-    writeCommand(0xD323);
-    writeData(0x8C);
-    writeCommand(0xD324);
-    writeData(0x02);
-    writeCommand(0xD325);
-    writeData(0x9E);
-    writeCommand(0xD326);
-    writeData(0x02);
-    writeCommand(0xD327);
-    writeData(0xB4);
-    writeCommand(0xD328);
-    writeData(0x02);
-    writeCommand(0xD329);
-    writeData(0xC2);
-    writeCommand(0xD32A);
-    writeData(0x02);
-    writeCommand(0xD32B);
-    writeData(0xD6);
-    writeCommand(0xD32C);
-    writeData(0x02);
-    writeCommand(0xD32D);
-    writeData(0xE4);
-    writeCommand(0xD32E);
-    writeData(0x02);
-    writeCommand(0xD32F);
-    writeData(0xF9);
-    writeCommand(0xD330);
-    writeData(0x03);
-    writeCommand(0xD331);
-    writeData(0x25);
-    writeCommand(0xD332);
-    writeData(0x03);
-    writeCommand(0xD333);
-    writeData(0x8E);
-
-    writeCommand(0xD400);
-    writeData(0x00);
-    writeCommand(0xD401);
-    writeData(0x08);
-    writeCommand(0xD402);
-    writeData(0x00);
-    writeCommand(0xD403);
-    writeData(0x09);
-    writeCommand(0xD404);
-    writeData(0x00);
-    writeCommand(0xD405);
-    writeData(0x11);
-    writeCommand(0xD406);
-    writeData(0x00);
-    writeCommand(0xD407);
-    writeData(0x24);
-    writeCommand(0xD408);
-    writeData(0x00);
-    writeCommand(0xD409);
-    writeData(0x3A);
-    writeCommand(0xD40A);
-    writeData(0x00);
-    writeCommand(0xD40B);
-    writeData(0x69);
-    writeCommand(0xD40C);
-    writeData(0x00);
-    writeCommand(0xD40D);
-    writeData(0x95);
-    writeCommand(0xD40E);
-    writeData(0x00);
-    writeCommand(0xD40F);
-    writeData(0xDB);
-    writeCommand(0xD410);
-    writeData(0x01);
-    writeCommand(0xD411);
-    writeData(0x0E);
-    writeCommand(0xD412);
-    writeData(0x01);
-    writeCommand(0xD413);
-    writeData(0x54);
-    writeCommand(0xD414);
-    writeData(0x01);
-    writeCommand(0xD415);
-    writeData(0x85);
-    writeCommand(0xD416);
-    writeData(0x01);
-    writeCommand(0xD417);
-    writeData(0xC8);
-    writeCommand(0xD418);
-    writeData(0x01);
-    writeCommand(0xD419);
-    writeData(0xFC);
-    writeCommand(0xD41A);
-    writeData(0x01);
-    writeCommand(0xD41B);
-    writeData(0xFD);
-    writeCommand(0xD41C);
-    writeData(0x02);
-    writeCommand(0xD41D);
-    writeData(0x29);
-    writeCommand(0xD41E);
-    writeData(0x02);
-    writeCommand(0xD41F);
-    writeData(0x56);
-    writeCommand(0xD420);
-    writeData(0x02);
-    writeCommand(0xD421);
-    writeData(0x6F);
-    writeCommand(0xD422);
-    writeData(0x02);
-    writeCommand(0xD423);
-    writeData(0x8C);
-    writeCommand(0xD424);
-    writeData(0x02);
-    writeCommand(0xD425);
-    writeData(0x9E);
-    writeCommand(0xD426);
-    writeData(0x02);
-    writeCommand(0xD427);
-    writeData(0xB4);
-    writeCommand(0xD428);
-    writeData(0x02);
-    writeCommand(0xD429);
-    writeData(0xC2);
-    writeCommand(0xD42A);
-    writeData(0x02);
-    writeCommand(0xD42B);
-    writeData(0xD6);
-    writeCommand(0xD42C);
-    writeData(0x02);
-    writeCommand(0xD42D);
-    writeData(0xE4);
-    writeCommand(0xD42E);
-    writeData(0x02);
-    writeCommand(0xD42F);
-    writeData(0xF9);
-    writeCommand(0xD430);
-    writeData(0x03);
-    writeCommand(0xD431);
-    writeData(0x25);
-    writeCommand(0xD432);
-    writeData(0x03);
-    writeCommand(0xD433);
-    writeData(0x8E);
-
-    writeCommand(0xD500);
-    writeData(0x00);
-    writeCommand(0xD501);
-    writeData(0x08);
-    writeCommand(0xD502);
-    writeData(0x00);
-    writeCommand(0xD503);
-    writeData(0x09);
-    writeCommand(0xD504);
-    writeData(0x00);
-    writeCommand(0xD505);
-    writeData(0x11);
-    writeCommand(0xD506);
-    writeData(0x00);
-    writeCommand(0xD507);
-    writeData(0x24);
-    writeCommand(0xD508);
-    writeData(0x00);
-    writeCommand(0xD509);
-    writeData(0x3A);
-    writeCommand(0xD50A);
-    writeData(0x00);
-    writeCommand(0xD50B);
-    writeData(0x69);
-    writeCommand(0xD50C);
-    writeData(0x00);
-    writeCommand(0xD50D);
-    writeData(0x95);
-    writeCommand(0xD50E);
-    writeData(0x00);
-    writeCommand(0xD50F);
-    writeData(0xDB);
-    writeCommand(0xD510);
-    writeData(0x01);
-    writeCommand(0xD511);
-    writeData(0x0E);
-    writeCommand(0xD512);
-    writeData(0x01);
-    writeCommand(0xD513);
-    writeData(0x54);
-    writeCommand(0xD514);
-    writeData(0x01);
-    writeCommand(0xD515);
-    writeData(0x85);
-    writeCommand(0xD516);
-    writeData(0x01);
-    writeCommand(0xD517);
-    writeData(0xC8);
-    writeCommand(0xD518);
-    writeData(0x01);
-    writeCommand(0xD519);
-    writeData(0xFC);
-    writeCommand(0xD51A);
-    writeData(0x01);
-    writeCommand(0xD51B);
-    writeData(0xFD);
-    writeCommand(0xD51C);
-    writeData(0x02);
-    writeCommand(0xD51D);
-    writeData(0x29);
-    writeCommand(0xD51E);
-    writeData(0x02);
-    writeCommand(0xD51F);
-    writeData(0x56);
-    writeCommand(0xD520);
-    writeData(0x02);
-    writeCommand(0xD521);
-    writeData(0x6F);
-    writeCommand(0xD522);
-    writeData(0x02);
-    writeCommand(0xD523);
-    writeData(0x8C);
-    writeCommand(0xD524);
-    writeData(0x02);
-    writeCommand(0xD525);
-    writeData(0x9E);
-    writeCommand(0xD526);
-    writeData(0x02);
-    writeCommand(0xD527);
-    writeData(0xB4);
-    writeCommand(0xD528);
-    writeData(0x02);
-    writeCommand(0xD529);
-    writeData(0xC2);
-    writeCommand(0xD52A);
-    writeData(0x02);
-    writeCommand(0xD52B);
-    writeData(0xD6);
-    writeCommand(0xD52C);
-    writeData(0x02);
-    writeCommand(0xD52D);
-    writeData(0xE4);
-    writeCommand(0xD52E);
-    writeData(0x02);
-    writeCommand(0xD52F);
-    writeData(0xF9);
-    writeCommand(0xD530);
-    writeData(0x03);
-    writeCommand(0xD531);
-    writeData(0x25);
-    writeCommand(0xD532);
-    writeData(0x03);
-    writeCommand(0xD533);
-    writeData(0x8E);
-
-    writeCommand(0xD600);
-    writeData(0x00);
-    writeCommand(0xD601);
-    writeData(0x08);
-    writeCommand(0xD602);
-    writeData(0x00);
-    writeCommand(0xD603);
-    writeData(0x09);
-    writeCommand(0xD604);
-    writeData(0x00);
-    writeCommand(0xD605);
-    writeData(0x11);
-    writeCommand(0xD606);
-    writeData(0x00);
-    writeCommand(0xD607);
-    writeData(0x24);
-    writeCommand(0xD608);
-    writeData(0x00);
-    writeCommand(0xD609);
-    writeData(0x3A);
-    writeCommand(0xD60A);
-    writeData(0x00);
-    writeCommand(0xD60B);
-    writeData(0x69);
-    writeCommand(0xD60C);
-    writeData(0x00);
-    writeCommand(0xD60D);
-    writeData(0x95);
-    writeCommand(0xD60E);
-    writeData(0x00);
-    writeCommand(0xD60F);
-    writeData(0xDB);
-    writeCommand(0xD610);
-    writeData(0x01);
-    writeCommand(0xD611);
-    writeData(0x0E);
-    writeCommand(0xD612);
-    writeData(0x01);
-    writeCommand(0xD613);
-    writeData(0x54);
-    writeCommand(0xD614);
-    writeData(0x01);
-    writeCommand(0xD615);
-    writeData(0x85);
-    writeCommand(0xD616);
-    writeData(0x01);
-    writeCommand(0xD617);
-    writeData(0xC8);
-    writeCommand(0xD618);
-    writeData(0x01);
-    writeCommand(0xD619);
-    writeData(0xFC);
-    writeCommand(0xD61A);
-    writeData(0x01);
-    writeCommand(0xD61B);
-    writeData(0xFD);
-    writeCommand(0xD61C);
-    writeData(0x02);
-    writeCommand(0xD61D);
-    writeData(0x29);
-    writeCommand(0xD61E);
-    writeData(0x02);
-    writeCommand(0xD61F);
-    writeData(0x56);
-    writeCommand(0xD620);
-    writeData(0x02);
-    writeCommand(0xD621);
-    writeData(0x6F);
-    writeCommand(0xD622);
-    writeData(0x02);
-    writeCommand(0xD623);
-    writeData(0x8C);
-    writeCommand(0xD624);
-    writeData(0x02);
-    writeCommand(0xD625);
-    writeData(0x9E);
-    writeCommand(0xD626);
-    writeData(0x02);
-    writeCommand(0xD627);
-    writeData(0xB4);
-    writeCommand(0xD628);
-    writeData(0x02);
-    writeCommand(0xD629);
-    writeData(0xC2);
-    writeCommand(0xD62A);
-    writeData(0x02);
-    writeCommand(0xD62B);
-    writeData(0xD6);
-    writeCommand(0xD62C);
-    writeData(0x02);
-    writeCommand(0xD62D);
-    writeData(0xE4);
-    writeCommand(0xD62E);
-    writeData(0x02);
-    writeCommand(0xD62F);
-    writeData(0xF9);
-    writeCommand(0xD630);
-    writeData(0x03);
-    writeCommand(0xD631);
-    writeData(0x25);
-    writeCommand(0xD632);
-    writeData(0x03);
-    writeCommand(0xD633);
-    writeData(0x8E);
-
-    // #LV2 Page 0 enable
-    writeCommand(0xF000);
-    writeData(0x55);
-    writeCommand(0xF001);
-    writeData(0xAA);
-    writeCommand(0xF002);
-    writeData(0x52);
-    writeCommand(0xF003);
-    writeData(0x08);
-    writeCommand(0xF004);
-    writeData(0x00);
-
-    // #480x854
-    writeCommand(0xB500);
-    writeData(0x6B);
-
-    // #Display control
-    writeCommand(0xB100);
-    writeData(0xFC);
-    writeCommand(0xB101);
-    writeData(0x00);
-
-    // #Source hold time
-    writeCommand(0xB600);
-    writeData(0x05);
-
-    // #Gate EQ control
-    writeCommand(0xB700);
-    writeData(0x70);
-    writeCommand(0xB701);
-    writeData(0x70);
-
-    // #Source EQ control (Mode 2)
-    writeCommand(0xB800);
-    writeData(0x01);
-    writeCommand(0xB801);
-    writeData(0x03);
-    writeCommand(0xB802);
-    writeData(0x03);
-    writeCommand(0xB803);
-    writeData(0x03);
-
-    // #Inversion mode  (2-dot)
-    writeCommand(0xBC00);
-    writeData(0x00);
-    writeCommand(0xBC01);
-    writeData(0x00);
-    writeCommand(0xBC02);
-    writeData(0x00);
-
-    // #Frame rate
-    writeCommand(0xBD00);
-    writeData(0x01);
-    writeCommand(0xBD01);
-    writeData(0x6C);
-    writeCommand(0xBD02);
-    writeData(0x1E);
-    writeCommand(0xBD03);
-    writeData(0x1D);
-    writeCommand(0xBD04);
-    writeData(0x00);
-
-    // #Timing control 4H w/ 4-delay_ms(
-    writeCommand(0xC900);
-    writeData(0xD0);
-    writeCommand(0xC901);
-    writeData(0x02);
-    writeCommand(0xC902);
-    writeData(0x50);
-    writeCommand(0xC903);
-    writeData(0x50);
-    writeCommand(0xC904);
-    writeData(0x50);
-
-    writeCommand(0x3A00);
-    writeData(0x55);  // 0x77
-
-    setRotation(rotation);
-
-    writeCommand(0x3500);
-    writeData(0x00);
-    writeCommand(0x4400);
-    writeData(0x01);
-    writeCommand(0x4401);
-    writeData(0x0F);
-
-    writeCommand(0x1100);
-    HAL_Delay(120);
-    writeCommand(0x2900);
 }
 
 void Lcd::clearScreen() {
@@ -1264,42 +294,26 @@ void Lcd::fillScreen() {
     fillScreen(foreColor);
 }
 
+#define CCONV(c) ((MglColor){.blue = (uint8_t)((c&0x1F)<<3), .green = (uint8_t)(((c>>5)&0x3F)<<2), .red = (uint8_t)((c>>11)<<3)})
+
 void Lcd::fillScreen(RGB16Color color) {
-    clearAddressWindow();
-    LCD_RS_HIGH;
-    fastFill(color, width * height);
+    mgsWorkingArea(0,0, width, height);
+    mgdFill(CCONV(color));
 }
 
 void Lcd::drawPixel(uint16_t x, uint16_t y) {
-    if ((x < width) && (y < height)) {
-        setAddressWindow(x, y, x, y);
-        LCD_RS_HIGH;
-        LCD_DATA_GPIO_Port->ODR = foreColor;
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
-    }
+    mgxSetZone(x, y, 1, 1);
+    mgxPixelOut(CCONV(foreColor));
 }
 
 void Lcd::drawHLine(uint16_t x, uint16_t y, uint16_t l) {
-    if ((x < width) && (y < height)) {
-        if ((x + l - 1) >= width) {
-            l = width - x;
-        }
-        setAddressWindow(x, y, x + l - 1, y);
-        LCD_RS_HIGH;
-        fastFill(foreColor, l);
-    }
+    mgsWorkingArea(x, y, l, 1);
+    mgdFill(CCONV(foreColor));
 }
 
 void Lcd::drawVLine(uint16_t x, uint16_t y, uint16_t l) {
-    if ((x < width) && (y < height)) {
-        if ((y + l - 1) >= height) {
-            l = height - y;
-        }
-        setAddressWindow(x, y, x, y + l - 1);
-        LCD_RS_HIGH;
-        fastFill(foreColor, l);
-    }
+    mgsWorkingArea(x, y, 1, l);
+    mgdFill(CCONV(foreColor));
 }
 
 void Lcd::drawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
@@ -1357,17 +371,8 @@ void Lcd::drawRect(uint16_t x, uint16_t y, uint32_t w, uint32_t h) {
 }
 
 void Lcd::fillRect(uint16_t x, uint16_t y, uint32_t w, uint32_t h) {
-    if ((x < width) && (y < height)) {
-        if ((x + w - 1) >= width) {
-            w = width - x;
-        }
-        if ((y + h - 1) >= height) {
-            h = height - y;
-        }
-        setAddressWindow(x, y, x + w - 1, y + h - 1);
-        LCD_RS_HIGH;
-        fastFill(foreColor, w * h);
-    }
+    mgsWorkingArea(x, y, w, h);
+    mgdFill(CCONV(foreColor));
 }
 
 void Lcd::drawCircle(uint16_t x, uint16_t y, uint16_t r) {
@@ -1694,8 +699,7 @@ void Lcd::drawText(const char text[], uint16_t textLength, uint16_t x, uint16_t 
             break;
     }
     // draw Text
-    setAddressWindow(xPos, yPos, xPos + wText - 1, y + hText - 1);
-    LCD_RS_HIGH;
+    mgxSetZone(xPos, yPos, wText, hText);
     // row --> letter --> column
     for (uint16_t row = 0; row < hText; row++) {
         for (uint16_t letter = 0; letter < textLength; letter++) {
@@ -1704,18 +708,14 @@ void Lcd::drawText(const char text[], uint16_t textLength, uint16_t x, uint16_t 
                 uint16_t offset = (getLetter(text[letter]) * fontHeight) + row;
                 bool pixel = (*(fontData + offset) >> (fontWidth - column - 1)) & 0x01;
                 if (pixel) {
-                    LCD_DATA_GPIO_Port->ODR = foreColor;
+                    mgxPixelOut(CCONV(foreColor));
                 } else {
-                    LCD_DATA_GPIO_Port->ODR = backColor;
+                    mgxPixelOut(CCONV(backColor));
                 }
-                LCD_WR_LOW;
-                LCD_WR_HIGH;
             }
             // draw spacing
-            LCD_DATA_GPIO_Port->ODR = backColor;
             for (uint8_t i = 0; i < fontSpacing; i++) {
-                LCD_WR_LOW;
-                LCD_WR_HIGH;
+                mgxPixelOut(CCONV(backColor));
             }
         }
     }
@@ -1770,65 +770,38 @@ void Lcd::drawNumber(int32_t num, uint8_t numSize, uint16_t x, uint16_t y) {
 }
 
 void Lcd::clearHLine(uint16_t x, uint16_t y, uint16_t l) {
-    if ((x < width) && (y < height)) {
-        if ((x + l - 1) >= width) {
-            l = width - x;
-        }
-        setAddressWindow(x, y, x + l - 1, y);
-        LCD_RS_HIGH;
-        fastFill(backColor, l);
-    }
+    mgsWorkingArea(x, y, l, 1);
+    mgdFill(CCONV(backColor));
 }
 
 void Lcd::clearVLine(uint16_t x, uint16_t y, uint16_t l) {
-    if ((x < width) && (y < height)) {
-        if ((y + l - 1) >= height) {
-            l = height - y;
-        }
-        setAddressWindow(x, y, x, y + l - 1);
-        LCD_RS_HIGH;
-        fastFill(backColor, l);
-    }
+    mgsWorkingArea(x, y, 1, l);
+    mgdFill(CCONV(backColor));
 }
 
 void Lcd::clearRect(uint16_t x, uint16_t y, uint32_t w, uint32_t h) {
-    if ((x < width) && (y < height)) {
-        if ((x + w - 1) >= width) {
-            w = width - x;
-        }
-        if ((y + h - 1) >= height) {
-            h = height - y;
-        }
-        setAddressWindow(x, y, x + w - 1, y + h - 1);
-        LCD_RS_HIGH;
-        fastFill(backColor, w * h);
-    }
+    mgsWorkingArea(x, y, w, h);
+    mgdFill(CCONV(backColor));
 }
 
 void Lcd::drawRGB16Image(const RGB16Color* indexPtr, const uint8_t* pixelPtr, uint8_t indexSize, uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
     // draw image
-    setAddressWindow(x, y, x + w - 1, y + h - 1);
-    LCD_RS_HIGH;
+    mgxSetZone(x, y, w, h);
     for (uint32_t i = 0; i < (w * h); i++) {
-        LCD_DATA_GPIO_Port->ODR = indexPtr[pixelPtr[i]];
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
+        mgxPixelOut(CCONV(indexPtr[pixelPtr[i]]));
     }
 }
 
 void Lcd::drawRGB16Image(const RGB16Color* indexPtr, const uint8_t* pixelPtr, uint8_t indexSize, float alpha, uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
     // create 16 bit color index
-    RGB16Color indexRGB16[indexSize];
+    RGB16Color indexRGB16[indexSize]; // TODO!!!!!!!!!!!! WWWWWTTTTTTFFFFF!!!!!!
     for (uint8_t i = 0; i < indexSize; i++) {
         indexRGB16[i] = alphaColor(indexPtr[i], alpha);
     }
     // draw image
-    setAddressWindow(x, y, x + w - 1, y + h - 1);
-    LCD_RS_HIGH;
+    mgxSetZone(x, y, w, h);
     for (uint32_t j = 0; j < (w * h); j++) {
-        LCD_DATA_GPIO_Port->ODR = indexRGB16[pixelPtr[j]];
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
+        mgxPixelOut(CCONV(indexRGB16[pixelPtr[j]]));
     }
 }
 
@@ -1839,12 +812,9 @@ void Lcd::drawRGB24Image(const RGB24RawColor* indexPtr, const uint8_t* pixelPtr,
         indexRGB16[i] = convertColor(indexPtr[i]);
     }
     // draw image
-    setAddressWindow(x, y, x + w - 1, y + h - 1);
-    LCD_RS_HIGH;
+    mgxSetZone(x, y, w, h);
     for (uint32_t j = 0; j < (w * h); j++) {
-        LCD_DATA_GPIO_Port->ODR = indexRGB16[pixelPtr[j]];
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
+        mgxPixelOut(CCONV(indexRGB16[pixelPtr[j]]));
     }
 }
 
@@ -1855,12 +825,9 @@ void Lcd::drawRGB24Image(const RGB24RawColor* indexPtr, const uint8_t* pixelPtr,
         indexRGB16[i] = alphaColor(indexPtr[i], alpha);
     }
     // draw image
-    setAddressWindow(x, y, x + w - 1, y + h - 1);
-    LCD_RS_HIGH;
+    mgxSetZone(x, y, w, h);
     for (uint32_t j = 0; j < (w * h); j++) {
-        LCD_DATA_GPIO_Port->ODR = indexRGB16[pixelPtr[j]];
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
+        mgxPixelOut(CCONV(indexRGB16[pixelPtr[j]]));
     }
 }
 
@@ -1877,14 +844,11 @@ void Lcd::fadeRGB16Image(const RGB16Color* indexPtr, const uint8_t* pixelPtr, ui
             indexRGB16[j] = alphaColor(indexPtr[j], alpha);
         }
         // draw image
-        setAddressWindow(x, y, x + w - 1, y + h - 1);
-        LCD_RS_HIGH;
+        mgxSetZone(x, y, w, h);
         for (uint32_t k = 0; k < (w * h); k++) {
-            LCD_DATA_GPIO_Port->ODR = indexRGB16[pixelPtr[k]];
-            LCD_WR_LOW;
-            LCD_WR_HIGH;
+            mgxPixelOut(CCONV(indexRGB16[pixelPtr[k]]));
         }
-        HAL_Delay(delay);
+        bspDelayMs(delay);
         (mode) ? alpha += alphaStep : alpha -= alphaStep;
     }
 }
@@ -1902,14 +866,11 @@ void Lcd::fadeRGB24Image(const RGB24RawColor* indexPtr, const uint8_t* pixelPtr,
             indexRGB16[j] = alphaColor(indexPtr[j], alpha);
         }
         // draw image
-        setAddressWindow(x, y, x + w - 1, y + h - 1);
-        LCD_RS_HIGH;
+        mgxSetZone(x, y, w, h);
         for (uint32_t k = 0; k < (w * h); k++) {
-            LCD_DATA_GPIO_Port->ODR = indexRGB16[pixelPtr[k]];
-            LCD_WR_LOW;
-            LCD_WR_HIGH;
+            mgxPixelOut(CCONV(indexRGB16[pixelPtr[k]]));
         }
-        HAL_Delay(delay);
+        bspDelayMs(delay);
         (mode) ? alpha += alphaStep : alpha -= alphaStep;
     }
 }
@@ -1930,12 +891,9 @@ void Lcd::drawInitSdAlert(SdResult sdResult) {
 
     x = 388;
     y = 190;
-    setAddressWindow(x, y, x + kSdIconWidth - 1, y + kSdIconHeight - 1);
-    LCD_RS_HIGH;
+    mgxSetZone(x, y, kSdIconWidth, kSdIconHeight);
     for (uint32_t j = 0; j < (kSdIconWidth * kSdIconHeight); j++) {
-        LCD_DATA_GPIO_Port->ODR = indexRGB16[kSdIconData[j]];
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
+        mgxPixelOut(CCONV(indexRGB16[kSdIconData[j]]));
     }
 
     // draw sd card detail icon
@@ -1952,13 +910,9 @@ void Lcd::drawInitSdAlert(SdResult sdResult) {
 
     x += 27;
     y += 68;
-    setAddressWindow(x, y, x + kSdDetailIconWidth - 1,
-                     y + kSdDetailIconHeight - 1);
-    LCD_RS_HIGH;
+    mgxSetZone(x, y, kSdDetailIconWidth, kSdDetailIconHeight);
     for (uint32_t j = 0; j < (kSdDetailIconWidth * kSdDetailIconHeight); j++) {
-        LCD_DATA_GPIO_Port->ODR = indexRGB16[kSdDetailIconData[offset + j]];
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
+        mgxPixelOut(CCONV(indexRGB16[kSdDetailIconData[offset + j]]));
     }
 
     setForeColor(BLACK);
@@ -1977,22 +931,16 @@ void Lcd::drawInitSdAlert(SdResult sdResult) {
 
     x = 314;
     y = 382;
-    setAddressWindow(x, y, x + 13 - 1, y + 25 - 1);
-    LCD_RS_HIGH;
+    mgxSetZone(x, y, 13, 25); // TODO: numbers
     for (uint32_t j = 0; j < (13 * 25); j++) {
-        LCD_DATA_GPIO_Port->ODR = indexRGB16[kCircleLeftData[j]];
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
+        mgxPixelOut(CCONV(indexRGB16[kCircleLeftData[j]]));
     }
 
     x = 314 + 213;
     y = 382;
-    setAddressWindow(x, y, x + 13 - 1, y + 25 - 1);
-    LCD_RS_HIGH;
+    mgxSetZone(x, y, 13, 25); // TODO: numbers
     for (uint32_t j = 0; j < (13 * 25); j++) {
-        LCD_DATA_GPIO_Port->ODR = indexRGB16[kCircleRightData[j]];
-        LCD_WR_LOW;
-        LCD_WR_HIGH;
+        mgxPixelOut(CCONV(indexRGB16[kCircleRightData[j]]));
     }
 
     x = 327;
@@ -2051,25 +999,4 @@ void Lcd::clearInitSdAlert() {
     setForeColor(BLACK);
     fillRect(307, 190, 240, 220);
     setForeColor(WHITE);
-}
-
-void Lcd::invertDisplay(bool invert) {
-    if (invert) {
-        writeCommand(LCD_ENTER_INVERT_MODE);
-    } else {
-        writeCommand(LCD_EXIT_INVERT_MODE);
-    }
-}
-
-void Lcd::displayOn() {
-    writeCommand(LCD_SET_DISPLAY_ON);
-    clearScreen();
-    HAL_Delay(120);
-    LCD_BL_HIGH;
-}
-
-void Lcd::displayOff() {
-    LCD_BL_LOW;
-    HAL_Delay(120);
-    writeCommand(LCD_SET_DISPLAY_OFF);
 }
