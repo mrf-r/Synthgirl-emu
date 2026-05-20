@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.23)
 project(synthgirl)
 
-add_compile_options(-gdwarf-3)
-add_link_options(-gdwarf-3)
+# add_compile_options(-gdwarf-3)
+# add_link_options(-gdwarf-3)
 
 add_subdirectory(emu)
 add_subdirectory(Core)

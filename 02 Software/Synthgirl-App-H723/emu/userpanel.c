@@ -224,7 +224,8 @@ void panelConstruct(SDL_Renderer* rend)
     // wMidiInit(&wmidi_io, 70, 0, rend, "MPK", "MPK", 31250, 115200);
     wAudioInit(&waudio, 120, 0, rend, 0, 0, 48000, 32, synthAudioCallback);
     mgsDisplay(&disp_tft_mgldisp);
-    mgdHsvTestFill();
+    mgsWorkingArea(0, 0, DISP_XSIZE, DISP_YSIZE);
+    mgdFill((MglColor){.wrd = 0});
 }
 
 void appStart() {
