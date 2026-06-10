@@ -4,7 +4,7 @@ add_library(App OBJECT)
 target_sources(App
     PRIVATE
         Library/Controller/Controller.cpp
-        Library/Lcd/lcd.cpp
+        Library/Lcd/Lcd.cpp
 )
 
 target_include_directories(App
