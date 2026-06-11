@@ -948,7 +948,7 @@ void Lcd::drawInitSdAlert(SdResult sdResult) {
     drawHLine(x, y + 24, 200);
 
     // draw text
-    const char* alertPtr = NULL;
+    const char* alertPtr = "";
 
     switch (sdResult) {
         case SD_OK:

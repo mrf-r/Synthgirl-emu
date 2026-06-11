@@ -1285,7 +1285,7 @@ SdResult Controller::sd_initialize() {
                             if (sd_checkFolderExist("System/Synthkit") == SD_OK) {
                                 if (sd_checkFolderExist("System/Sound") == SD_OK) {
                                     if (sd_checkFolderExist("System/Image") == SD_OK) {
-                                        if (sd_checkFolderExist("System/Firmware") == SD_OK) {
+                                        // if (sd_checkFolderExist("System/Firmware") == SD_OK) {
                                             if ((sd_checkMetronome() == SD_OK) && (sd_loadMetronome() == SD_OK) &&
                                                 (sd_loadImage("System/Image/Image_Logo.rwi", RAM_IMAGE_LOGO_PALETTE_ADDRESS, RAM_IMAGE_LOGO_DATA_ADDRESS, kImageLogoPalette, kImageLogoWidth, kImageLogoHeight, RGB16) == SD_OK) &&
                                                 (sd_loadImage("System/Image/Image_Menu.rwi", RAM_IMAGE_MENU_PALETTE_ADDRESS, RAM_IMAGE_MENU_DATA_ADDRESS, kImageMenuPalette, kImageMenuWidth, kImageMenuHeight, RGB16) == SD_OK) &&
@@ -1317,9 +1317,9 @@ SdResult Controller::sd_initialize() {
                                             } else {
                                                 sdResult = SD_ERROR_SYSTEMFILE;
                                             }
-                                        } else {
-                                            sdResult = SD_ERROR_FIRMWAREFOLDER;
-                                        }
+                                        // } else {
+                                        //     sdResult = SD_ERROR_FIRMWAREFOLDER;
+                                        // }
                                     } else {
                                         sdResult = SD_ERROR_IMAGEFOLDER;
                                     }
@@ -1389,13 +1389,13 @@ SdResult Controller::sd_reinitialize() {
                                 if (sd_checkFolderExist("System/Synthkit") == SD_OK) {
                                     if (sd_checkFolderExist("System/Sound") == SD_OK) {
                                         if (sd_checkFolderExist("System/Image") == SD_OK) {
-                                            if (sd_checkFolderExist("System/Firmware") == SD_OK) {
+                                            // if (sd_checkFolderExist("System/Firmware") == SD_OK) {
                                                 sd.ready = true;
                                                 sd.getLibrary = true;
                                                 sdResult = SD_OK;
-                                            } else {
-                                                sdResult = SD_ERROR_FIRMWAREFOLDER;
-                                            }
+                                            // } else {
+                                            //     sdResult = SD_ERROR_FIRMWAREFOLDER;
+                                            // }
                                         } else {
                                             sdResult = SD_ERROR_IMAGEFOLDER;
                                         }

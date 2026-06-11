@@ -28,6 +28,6 @@
 #define PANEL_SIZE_X (PAN_BORDER * 2 + PAN_BUT_INC * 6 + (DISP_XSIZE + 2 + PANEL_UNIT_GAP) * PANEL_SCALE)
 #define PANEL_SIZE_Y (PAN_BORDER * 2 + (DISP_YSIZE + 2) * PANEL_SCALE)
 
-#define FF_VOLUME_ROOT {"../Sd Card", "./ff_ext"}
+#define FF_VOLUME_ROOT {"../Sd_Card", "./ff_ext"}
 
 #endif // __PANEL_CONF_H
