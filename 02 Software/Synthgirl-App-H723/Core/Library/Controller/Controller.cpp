@@ -217,6 +217,7 @@ void Controller::systemReset() {
     // lcd.displayOff();
     // bspDelayMs(1000);
     dac.audioOff();
+    __builtin_trap();
     // NVIC_SystemReset();
     // TODO!!
 }
